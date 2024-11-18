@@ -1,4 +1,7 @@
 /__pycache__
-user_data.jsot
 /logs
 DGRMClauncher
+/build
+/dist
+launcher.spec
+launcher.exe
