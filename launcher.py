@@ -3,15 +3,34 @@ from customtkinter import filedialog
 import json
 import os
 import platform
+from exceptions import *
+from exceptions import UserDataException
+from exceptions import UserOptionsException
 
-# Function to save user data
-def save_user_data(data, directory, json_file):
+def save_user_data(new_data, directory, json_file):
     user_data_file = os.path.join(directory, json_file)
+
+    # Check if the file exists; if not, create an empty file
+    if not os.path.exists(user_data_file):
+        # Create the file with an empty dictionary if it doesn't exist
+        with open(user_data_file, "w") as f:
+            json.dump({}, f, indent=4)
+
+    # Open the file to read the existing data
+    with open(user_data_file, "r") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            data = {}  # If JSON is invalid, initialize as empty dictionary
+
+    # Update the data with new data
+    data.update(new_data)
+
+    # Save the updated data back to the file
     with open(user_data_file, "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
 
-# Function to load user data
 def load_user_data(directory, json_file):
     user_data_file = os.path.join(directory, json_file)
     if os.path.exists(user_data_file):
@@ -54,26 +73,47 @@ class App(ctk.CTk):
         self.user_data = load_user_data(self.default_dir, self.user_data_json)
         self.user_options = load_user_data(self.default_dir, self.user_options_json)
 
-        if self.user_data == None:
+        if self.user_data is None:
             # User is already registered
             self.show_registration_frame()
+        else:
+           try:
+              if not self.user_data.get("username") or not self.user_data.get("password"):
+                  raise UserDataException
 
-        elif self.user_data["username"] and self.user_data["password"]:
-            self.username_var.set(self.user_data.get("username", ""))
-            #ctk.CTkLabel(self.directory_frame, text=f"С возвращением, {self.user_data["username"]}", font=("Arial", 18)).pack(pady=15)
-            self.show_directory_frame()
+              elif self.user_data.get("username") and self.user_data.get("password"):
+                  self.username_var.set(self.user_data.get("username", ""))
+                  self.show_directory_frame()
 
-        if self.user_options == None:
+           except Exception as e:
+                  print(f"error: {e}")
+
+           except UserDataException as e:
+                  ctk.CTkLabel(self.registration_frame, text="Не введен логин или пароль.", text_color="red").pack(pady=5)
+                  self.show_registration_frame()
+
+        if self.user_options is None:
             ctk.CTkLabel(self.directory_frame, text="Выберите директорию.", text_color="red").pack(pady=5)
-        elif self.user_options["mc_dir"] != "":
-            self.show_options_frame()
 
+        try:
+            if not self.user_options.get("mc_dir"):
+                raise UserOptionsException
+
+            elif self.user_options.get("mc_dir"):
+                self.show_options_frame()
+
+        except Exception as e:
+            print(f"error: {e}")
+
+        except UserOptionsException as e:
+           ctk.CTkLabel(self.registration_frame, text="Выберите директорию.", text_color="red").pack(pady=5)
+           self.show_directory_frame()
+        self.show_main_frame()
 
     def show_registration_frame(self):
         self.clear_frames()
         self.registration_frame.pack(fill="both", expand=True)
 
-        # Registration Form
         ctk.CTkLabel(self.registration_frame, text="Регистрация", font=("Arial", 18)).pack(pady=10)
 
         ctk.CTkLabel(self.registration_frame, text="Имя пользователя:").pack(pady=5)
@@ -107,8 +147,20 @@ class App(ctk.CTk):
 
         ctk.CTkButton(self.options_frame, text="Продолжить", command=self.handle_options).pack(pady=20)
 
+
+    def show_main_frame(self):
+        self.clear_frames()
+        self.main_frame.pack(fill="both", expand=True)
+
+        ctk.CTkLabel(self.main_frame, text=f"С возвращением, {self.user_data.get("username")}", font=("Arial", 18)).pack(pady=15)
+        if os.path.isdir(self.user_options.get("mc_dir")):
+            ctk.CTkButton(self.main_frame, text="Запустить", command=lambda: self.launch_mc(self.mc_dir, self.user_options)).pack(pady=20)
+        else:
+            ctk.CTkButton(self.main_frame, text="Установить", command=lambda: self.launch_mc(self.mc_dir, self.user_options)).pack(pady=20)
+
+
     def clear_frames(self):
-        for frame in [self.registration_frame, self.directory_frame, self.options_frame]:
+        for frame in [self.registration_frame, self.directory_frame, self.options_frame, self.main_frame]:
             frame.pack_forget()
 
 
@@ -131,7 +183,7 @@ class App(ctk.CTk):
         token = self.token_var.get()
         self.user_options = {"uuid": uuid, "token": token}
         save_user_data(self.user_options, self.default_dir, self.user_options_json)
-
+        self.show_main_frame()
 
     def choose_directory(self):
         self.mc_dir = filedialog.askdirectory(title="Выберите директорию для Майнкрафта")
