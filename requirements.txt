@@ -1,0 +1,4 @@
+#python==3.12
+
+minecraft-launcher-lib==6.5
+customtkinter==5.2.2
