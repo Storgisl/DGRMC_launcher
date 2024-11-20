@@ -1,8 +1,12 @@
-import customtkinter as ctk
-from customtkinter import filedialog
 import json
 import os
 import platform
+
+import customtkinter as ctk
+from customtkinter import filedialog
+
+from icecream import ic
+
 from exceptions import UserDataException
 from exceptions import UserOptionsException
 
@@ -10,33 +14,40 @@ from exceptions import UserOptionsException
 def save_user_data(new_data, directory, json_file):
     user_data_file = os.path.join(directory, json_file)
 
-    # Check if the file exists; if not, create an empty file
     if not os.path.exists(user_data_file):
-        # Create the file with an empty dictionary if it doesn't exist
         with open(user_data_file, "w") as f:
             json.dump({}, f, indent=4)
 
-    # Open the file to read the existing data
     with open(user_data_file, "r") as f:
         try:
             data = json.load(f)
         except json.JSONDecodeError:
-            data = {}  # If JSON is invalid, initialize as empty dictionary
+            data = {}
 
-    # Update the data with new data
     data.update(new_data)
 
-    # Save the updated data back to the file
     with open(user_data_file, "w") as f:
         json.dump(data, f, indent=4)
 
 
-def load_user_data(directory, json_file):
+def load_user_data(directory, json_file, create_if_missing=True):
     user_data_file = os.path.join(directory, json_file)
-    if os.path.exists(user_data_file):
-        with open(user_data_file, "r") as f:
-            return json.load(f)
-    return None
+
+    if os.path.isfile(user_data_file):
+        try:
+            with open(user_data_file, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print(f"Warning: {user_data_file} contains invalid JSON. Returning empty data.")
+            return {}
+    else:
+        if create_if_missing:
+            print(f"File {user_data_file} does not exist. Creating a new one...")
+            with open(user_data_file, "w") as f:
+                json.dump({}, f, indent=4)
+            return {}
+
+    return {}
 
 
 class App(ctk.CTk):
@@ -71,42 +82,39 @@ class App(ctk.CTk):
             # For Linux/Mac, use a hidden folder in the home directory
             self.default_dir = os.path.expanduser("~/.dgrmc_launcher")
 
+        ic(self.default_dir)
+
         if self.default_dir:
             os.makedirs(self.default_dir, exist_ok=True)
 
-            self.user_data = load_user_data(directory=self.default_dir,
-                                            json_file=self.user_data_json)
+        self.user_data = load_user_data(directory=self.default_dir,
+                                        json_file=self.user_data_json)
 
         self.user_options = load_user_data(directory=self.default_dir,
                                            json_file=self.user_options_json)
-
-        if self.user_data is None:
-            # User is already registered
-            self.show_registration_frame()
-        else:
-            try:
-                if (not self.user_data.get("username") or
-                        not self.user_data.get("password")):
-                    raise UserDataException
-
-                elif (self.user_data.get("username") and
-                        self.user_data.get("password")):
-                    self.username_var.set(self.user_data.get("username", ""))
-                    self.show_directory_frame()
-
-            except UserDataException:
-                ctk.CTkLabel(self.registration_frame,
-                             text="Не введен логин или пароль.",
-                             text_color="red").pack(pady=5)
+        ic(self.user_data)
+        ic(self.user_options)
+        ic(self.mc_dir)
+        ic(self.username_var)
+        ic(self.password_var)
+        try:
+            if (not self.user_data.get("username")
+                    or not self.user_data.get("password")):
                 self.show_registration_frame()
 
-            except Exception as e:
-                print(f"error: {e}")
+            elif (self.user_data.get("username") and
+                    self.user_data.get("password")):
+                self.username_var.set(self.user_data.get("username", ""))
+                self.show_directory_frame()
 
-        if self.user_options is None:
-            ctk.CTkLabel(self.directory_frame,
-                         text="Выберите директорию.",
+        except UserDataException:
+            ctk.CTkLabel(self.registration_frame,
+                         text="Не введен логин или пароль.",
                          text_color="red").pack(pady=5)
+            self.show_registration_frame()
+
+        except Exception as e:
+            print(f"error: {e}")
 
         try:
             if not self.user_options.get("mc_dir"):
@@ -116,15 +124,12 @@ class App(ctk.CTk):
                 self.show_options_frame()
 
         except UserOptionsException:
-            ctk.CTkLabel(self.registration_frame,
+            ctk.CTkLabel(self.directory_frame,
                          text="Выберите директорию.",
                          text_color="red").pack(pady=5)
-            self.show_directory_frame()
 
         except Exception as e:
             print(f"error: {e}")
-
-        self.show_main_frame()
 
     def show_registration_frame(self):
         self.clear_frames()
@@ -194,13 +199,14 @@ class App(ctk.CTk):
                      text=f"С возвращением, {self.user_data.get("username")}",
                      font=self.font).pack(pady=15)
 
-        if os.path.isdir(self.user_options.get("mc_dir")):
-            ctk.CTkButton(self.main_frame,
-                          text="Запустить",
-                          font=self.font,
-                          command=lambda: self.launch_mc(self.mc_dir,
-                                                         self.user_options)
-                          ).pack(pady=20)
+        if self.user_options.get("mc_dir"):
+            if os.path.isdir(self.user_options.get("mc_dir")):
+                ctk.CTkButton(self.main_frame,
+                              text="Запустить",
+                              font=self.font,
+                              command=lambda: self.launch_mc(self.mc_dir,
+                                                             self.user_options)
+                              ).pack(pady=20)
         else:
             ctk.CTkButton(self.main_frame,
                           text="Установить",
@@ -229,9 +235,15 @@ class App(ctk.CTk):
                            json_file="user_data.json")
             self.show_directory_frame()
         else:
-            ctk.CTkLabel(self.registration_frame,
-                         text="Заполните все поля.",
-                         text_color="red").pack(pady=5)
+            if not hasattr(self, "error_label"):
+                # Create the error label if it doesn't exist
+                self.error_label = ctk.CTkLabel(self.registration_frame,
+                                                text="Заполните все поля.",
+                                                text_color="red")
+                self.error_label.pack(pady=5)
+            else:
+                # Update the existing error label if it already exists
+                self.error_label.configure(text="Заполните все поля.")
 
     def handle_options(self):
         uuid = self.uuid_var.get()
@@ -253,6 +265,7 @@ class App(ctk.CTk):
             save_user_data(new_data=self.user_options,
                            directory=self.default_dir,
                            json_file=self.user_options_json)
+            self.show_options_frame()
 
     def launch_mc(self, mc_dir, options):
         import minecraft_launcher_lib
