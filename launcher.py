@@ -64,7 +64,7 @@ class App(ctk.CTk):
         self.password_var = ctk.StringVar()
         self.uuid_var = ctk.StringVar()
         self.token_var = ctk.StringVar()
-        self.mc_dir = ""
+        self.mc_dir = ctk.StringVar()
         self.user_data_json = "user_data.json"
         self.user_options_json = "user_options.json"
         # Frames
@@ -94,9 +94,9 @@ class App(ctk.CTk):
                                            json_file=self.user_options_json)
         ic(self.user_data)
         ic(self.user_options)
-        ic(self.mc_dir)
-        ic(self.username_var)
-        ic(self.password_var)
+        ic(self.mc_dir.get())
+        ic(self.username_var.get())
+        ic(self.password_var.get())
         try:
             if (not self.user_data.get("username")
                     or not self.user_data.get("password")):
@@ -130,6 +130,9 @@ class App(ctk.CTk):
 
         except Exception as e:
             print(f"error: {e}")
+
+        if self.user_data.get("username") and self.user_data.get("password") and self.user_options.get("mc_dir"):
+            self.show_main_frame()
 
     def show_registration_frame(self):
         self.clear_frames()
@@ -204,7 +207,7 @@ class App(ctk.CTk):
                 ctk.CTkButton(self.main_frame,
                               text="Запустить",
                               font=self.font,
-                              command=lambda: self.launch_mc(self.mc_dir,
+                              command=lambda: self.launch_mc(self.user_options.get("mc_dir"),
                                                              self.user_options)
                               ).pack(pady=20)
         else:
@@ -255,16 +258,19 @@ class App(ctk.CTk):
         self.show_main_frame()
 
     def choose_directory(self):
-        self.mc_dir = filedialog.askdirectory(
+        mc_dir = filedialog.askdirectory(
                 title="Выберите директорию для Майнкрафта")
+        self.mc_dir = mc_dir
+        ic(self.mc_dir)
         if self.mc_dir:
-            self.user_options = {"mc_dir": self.mc_dir}
+            self.user_options["mc_dir"] = self.mc_dir
             print(f"Selected directory: {self.mc_dir}")
             # Save selected directory if needed
             print("Ready to launch or configure Minecraft!")
             save_user_data(new_data=self.user_options,
                            directory=self.default_dir,
                            json_file=self.user_options_json)
+            self.mc_dir = self.user_options["mc_dir"]
             self.show_options_frame()
 
     def launch_mc(self, mc_dir, options):
