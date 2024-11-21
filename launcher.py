@@ -214,7 +214,7 @@ class App(ctk.CTk):
             ctk.CTkButton(self.main_frame,
                           text="Установить",
                           font=self.font,
-                          command=lambda: self.launch_mc(self.mc_dir,
+                          command=lambda: self.launch_mc(self.user_options.get("mc_dir"),
                                                          self.user_options)
                           ).pack(pady=20)
 
