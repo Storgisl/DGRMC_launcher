@@ -7,8 +7,8 @@ from customtkinter import filedialog
 
 from icecream import ic
 
-from exceptions import UserDataException
-from exceptions import UserOptionsException
+from exceptions import UserDataException, UserDirException, \
+    UserOptionsException
 
 
 def save_user_data(new_data, directory, json_file):
@@ -38,11 +38,13 @@ def load_user_data(directory, json_file, create_if_missing=True):
             with open(user_data_file, "r") as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            print(f"Warning: {user_data_file} contains invalid JSON. Returning empty data.")
+            print(f"Warning: {user_data_file} contains invalid JSON. \
+                Returning empty data.")
             return {}
     else:
         if create_if_missing:
-            print(f"File {user_data_file} does not exist. Creating a new one...")
+            print(f"File {user_data_file} does not exist. \
+            Creating a new one...")
             with open(user_data_file, "w") as f:
                 json.dump({}, f, indent=4)
             return {}
@@ -51,15 +53,26 @@ def load_user_data(directory, json_file, create_if_missing=True):
 
 
 class App(ctk.CTk):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
+        self.setup_window()
+        self.initialize_variables()
+        self.create_frames()
+        self.check_user_status()
+
+    def setup_window(self) -> None:
         self.geometry("800x600")
         self.title("DGRMC Launcher")
         ctk.set_appearance_mode("dark")
         self.font = ctk.CTkFont(family="Oswald",
                                 size=40,
                                 weight="bold")
-        # Variables
+
+    def initialize_variables(self) -> None:
+        """
+        эти переменные сохраняют в себе значения на момент работы приложения,
+        используй как плейсхолдеры для сохранения в json'ы
+        """
         self.username_var = ctk.StringVar()
         self.password_var = ctk.StringVar()
         self.uuid_var = ctk.StringVar()
@@ -67,13 +80,7 @@ class App(ctk.CTk):
         self.mc_dir = ctk.StringVar()
         self.user_data_json = "user_data.json"
         self.user_options_json = "user_options.json"
-        # Frames
-        self.registration_frame = ctk.CTkFrame(self)
-        self.directory_frame = ctk.CTkFrame(self)
-        self.options_frame = ctk.CTkFrame(self)
-        self.main_frame = ctk.CTkFrame(self)
 
-        # Check if user is already registered
         if platform.system() == "Windows":
             # For Windows, use the APPDATA directory
             self.default_dir = os.path.join(os.getenv("LOCALAPPDATA"),
@@ -95,8 +102,16 @@ class App(ctk.CTk):
         ic(self.user_data)
         ic(self.user_options)
         ic(self.mc_dir.get())
-        ic(self.username_var.get())
+        ic(self.user_data.get("username"))
         ic(self.password_var.get())
+
+    def create_frames(self) -> None:
+        self.registration_frame = ctk.CTkFrame(self)
+        self.directory_frame = ctk.CTkFrame(self)
+        self.options_frame = ctk.CTkFrame(self)
+        self.main_frame = ctk.CTkFrame(self)
+
+    def check_user_status(self) -> None:
         try:
             if (not self.user_data.get("username")
                     or not self.user_data.get("password")):
@@ -117,13 +132,13 @@ class App(ctk.CTk):
             print(f"error: {e}")
 
         try:
-            if not self.user_options.get("mc_dir"):
-                raise UserOptionsException
-
-            elif self.user_options.get("mc_dir"):
+            if self.user_data.get("mc_dir"):
                 self.show_options_frame()
 
-        except UserOptionsException:
+            elif not self.user_data.get("mc_dir"):
+                raise UserDirException
+
+        except UserDirException:
             ctk.CTkLabel(self.directory_frame,
                          text="Выберите директорию.",
                          text_color="red").pack(pady=5)
@@ -131,10 +146,12 @@ class App(ctk.CTk):
         except Exception as e:
             print(f"error: {e}")
 
-        if self.user_data.get("username") and self.user_data.get("password") and self.user_options.get("mc_dir"):
+        if (self.user_data.get("username")
+                and self.user_data.get("password")
+                and self.user_data.get("mc_dir")):
             self.show_main_frame()
 
-    def show_registration_frame(self):
+    def show_registration_frame(self) -> None:
         self.clear_frames()
         self.registration_frame.pack(fill="both",
                                      expand=True)
@@ -157,7 +174,7 @@ class App(ctk.CTk):
                       text="Продолжить",
                       command=self.handle_registration).pack(pady=20)
 
-    def show_directory_frame(self):
+    def show_directory_frame(self) -> None:
         self.clear_frames()
         self.directory_frame.pack(fill="both",
                                   expand=True)
@@ -169,7 +186,7 @@ class App(ctk.CTk):
                       text="Выберите директорию",
                       command=self.choose_directory).pack(pady=20)
 
-    def show_options_frame(self):
+    def show_options_frame(self) -> None:
         self.clear_frames()
         self.options_frame.pack(fill="both",
                                 expand=True)
@@ -194,7 +211,7 @@ class App(ctk.CTk):
                       text="Продолжить",
                       command=self.handle_options).pack(pady=20)
 
-    def show_main_frame(self):
+    def show_main_frame(self) -> None:
         self.clear_frames()
         self.main_frame.pack(fill="both", expand=True)
 
@@ -202,32 +219,34 @@ class App(ctk.CTk):
                      text=f"С возвращением, {self.user_data.get("username")}",
                      font=self.font).pack(pady=15)
 
-        if self.user_options.get("mc_dir"):
-            if os.path.isdir(self.user_options.get("mc_dir")):
-                ctk.CTkButton(self.main_frame,
-                              text="Запустить",
-                              font=self.font,
-                              command=lambda: self.launch_mc(self.user_options.get("mc_dir"),
-                                                             self.user_options)
-                              ).pack(pady=20)
+        if os.path.join(self.user_data.get("mc_dir"), "DGRMClauncher"):
+            ic(self.user_data.get("mc_dir"))
+            ctk.CTkButton(self.main_frame,
+                          text="Запустить",
+                          font=self.font,
+                          command=lambda: self.launch_mc(
+                                    mc_dir=self.user_data.get("mc_dir"),
+                                    options=self.user_options)
+                          ).pack(pady=20)
         else:
             ctk.CTkButton(self.main_frame,
                           text="Установить",
                           font=self.font,
-                          command=lambda: self.launch_mc(self.user_options.get("mc_dir"),
-                                                         self.user_options)
+                          command=lambda: self.launch_mc(
+                                    mc_dir=self.user_data.get("mc_dir"),
+                                    options=self.user_options)
                           ).pack(pady=20)
 
-    def clear_frames(self):
+    def clear_frames(self) -> None:
         for frame in [self.registration_frame,
                       self.directory_frame,
                       self.options_frame,
                       self.main_frame]:
             frame.pack_forget()
 
-    def handle_registration(self):
-        username = self.username_var.get()
-        password = self.password_var.get()
+    def handle_registration(self) -> None:
+        username: str = self.username_var.get()
+        password: str = self.password_var.get()
 
         if username and password:
             print(f"Регистрация прошла успешно: {username}")
@@ -248,32 +267,36 @@ class App(ctk.CTk):
                 # Update the existing error label if it already exists
                 self.error_label.configure(text="Заполните все поля.")
 
-    def handle_options(self):
-        uuid = self.uuid_var.get()
-        token = self.token_var.get()
-        self.user_options = {"uuid": uuid, "token": token}
+    def handle_options(self) -> None:
+        username: str = self.username_var.get()
+        uuid: str = self.uuid_var.get()
+        token: str = self.token_var.get()
+        self.user_options: dict = {"username": username,
+                                   "uuid": uuid,
+                                   "token": token}
+
         save_user_data(new_data=self.user_options,
                        directory=self.default_dir,
                        json_file=self.user_options_json)
+
         self.show_main_frame()
 
-    def choose_directory(self):
+    def choose_directory(self) -> None:
         mc_dir = filedialog.askdirectory(
                 title="Выберите директорию для Майнкрафта")
         self.mc_dir = mc_dir
         ic(self.mc_dir)
         if self.mc_dir:
-            self.user_options["mc_dir"] = self.mc_dir
+            self.user_data = {"mc_dir": self.mc_dir}
             print(f"Selected directory: {self.mc_dir}")
             # Save selected directory if needed
             print("Ready to launch or configure Minecraft!")
-            save_user_data(new_data=self.user_options,
+            save_user_data(new_data=self.user_data,
                            directory=self.default_dir,
-                           json_file=self.user_options_json)
-            self.mc_dir = self.user_options["mc_dir"]
+                           json_file=self.user_data_json)
             self.show_options_frame()
 
-    def launch_mc(self, mc_dir, options):
+    def launch_mc(self, mc_dir: str, options: dict) -> None:
         import minecraft_launcher_lib
         import subprocess
         version = "1.12.2"
