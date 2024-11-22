@@ -74,6 +74,8 @@ class App(ctk.CTk):
         используй как плейсхолдеры для сохранения в json'ы
         """
 
+        self.progress_label = None
+        self.progress_slider = None
         self.username_var = ctk.StringVar()
         self.password_var = ctk.StringVar()
         self.uuid_var = ctk.StringVar()
@@ -360,6 +362,34 @@ class App(ctk.CTk):
                                     pady=10,
                                     )
 
+    def show_installation_frame(self) -> None:
+        self.clear_frames()
+        self.main_frame.pack(fill="both", expand=True)
+
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+
+        install_content = ctk.CTkFrame(master=self.main_frame)
+        install_content.grid(row=0, column=0, padx=20, pady=20)
+
+        # Add a label for installation status
+        self.progress_label = ctk.CTkLabel(
+            master=install_content,
+            text="Установка Minecraft...",
+            font=self.font
+        )
+        self.progress_label.grid(row=0, column=0, pady=10)
+
+        # Add a slider for progress
+        self.progress_slider = ctk.CTkSlider(
+            master=install_content,
+            from_=0,
+            to=100,
+            number_of_steps=100,
+            width=300
+        )
+        self.progress_slider.grid(row=1, column=0, pady=10)
+
     def clear_frames(self) -> None:
         for frame in [self.registration_frame,
                       self.directory_frame,
@@ -435,42 +465,42 @@ class App(ctk.CTk):
             ).pack(pady=5)
 
     def install_mc(self, mc_dir: str) -> None:
+        import threading
         import minecraft_launcher_lib as mc_lib
 
-        def set_status(status: str):
-            print(status)
+        # Ensure progress_label and progress_slider are initialized
+        if not self.progress_label or not self.progress_slider:
+            self.show_installation_frame()
 
+        def installation_task():
+            version = "1.12.2"
+            minecraft_directory = os.path.join(mc_dir, "DGRMClauncher")
+            os.makedirs(minecraft_directory, exist_ok=True)
 
-        def set_progress(progress: int):
-            if current_max != 0:
-                print(f"{progress}/{current_max}")
+            try:
+                mc_lib.install.install_minecraft_version(
+                    versionid=version,
+                    minecraft_directory=minecraft_directory,
+                    callback={"setStatus": lambda status: print(status),
+                              "setProgress": progress_callback,
+                              "done": done_callback}
+                )
+            except Exception as e:
+                print(f"Error during installation: {e}")
+                self.progress_label.configure(text="Установка прервана. Попробуйте снова.")
 
+        def progress_callback(progress: int):
+            """Update the slider based on progress."""
+            self.progress_slider.set(progress)
+            self.progress_label.configure(text=f"Установка... {progress}%")
 
-        def set_max(new_max: int):
-            global current_max
-            current_max = new_max
+        def done_callback():
+            """Handle completion."""
+            self.progress_label.configure(text="Установка завершена!")
+            self.show_main_frame()
 
-        minecraft_directory = mc_lib.utils.get_minecraft_directory()
-
-        callback = {
-            "setStatus": set_status,
-            "setProgress": set_progress,
-            "setMax": set_max
-        }
-        version = "1.12.2"
-
-        minecraft_directory = os.path.join(mc_dir, "DGRMClauncher")
-
-        os.makedirs(minecraft_directory, exist_ok=True)
-
-        # Install the specified Minecraft version
-        mc_lib.install.install_minecraft_version(
-            versionid=version,
-            minecraft_directory=minecraft_directory,
-            callback=callback
-          )
-
-        self.show_main_frame()
+        # Run installation in a separate thread
+        threading.Thread(target=installation_task, daemon=True).start()
 
     def run_mc(self,mc_dir: str, options: dict) -> None:
         import minecraft_launcher_lib as mc_lib
