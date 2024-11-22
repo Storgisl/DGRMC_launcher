@@ -7,8 +7,8 @@ from customtkinter import filedialog
 
 from icecream import ic
 
-from exceptions import UserDataException, UserDirException, \
-    UserOptionsException
+from exceptions import UserDataException
+# , UserDirException, UserOptionsException
 
 
 def save_user_data(new_data, directory, json_file):
@@ -65,7 +65,7 @@ class App(ctk.CTk):
         self.title("DGRMC Launcher")
         ctk.set_appearance_mode("dark")
         self.font = ctk.CTkFont(family="Oswald",
-                                size=40,
+                                size=20,
                                 weight="bold")
 
     def initialize_variables(self) -> None:
@@ -73,6 +73,7 @@ class App(ctk.CTk):
         эти переменные сохраняют в себе значения на момент работы приложения,
         используй как плейсхолдеры для сохранения в json'ы
         """
+
         self.username_var = ctk.StringVar()
         self.password_var = ctk.StringVar()
         self.uuid_var = ctk.StringVar()
@@ -82,23 +83,31 @@ class App(ctk.CTk):
         self.user_options_json = "user_options.json"
 
         if platform.system() == "Windows":
-            # For Windows, use the APPDATA directory
-            self.default_dir = os.path.join(os.getenv("LOCALAPPDATA"),
-                                            "DGRMC_Launcher")
+            self.config_dir = os.path.join(os.getenv("LOCALAPPDATA"),
+                                           "DGRMC_Launcher")
         else:
-            # For Linux/Mac, use a hidden folder in the home directory
-            self.default_dir = os.path.expanduser("~/.dgrmc_launcher")
+            self.config_dir = os.path.expanduser("~/.dgrmc_launcher")
 
-        ic(self.default_dir)
+        if not os.path.exists(self.config_dir):
+            os.makedirs(self.config_dir)
 
-        if self.default_dir:
-            os.makedirs(self.default_dir, exist_ok=True)
+        if not os.path.exists(os.path.join(self.config_dir,
+                                           self.user_data_json)):
 
-        self.user_data = load_user_data(directory=self.default_dir,
-                                        json_file=self.user_data_json)
+            self.user_data = {}
+            self.user_options = {}
+        else:
 
-        self.user_options = load_user_data(directory=self.default_dir,
-                                           json_file=self.user_options_json)
+            self.user_data = load_user_data(
+                                            directory=self.config_dir,
+                                            json_file=self.user_data_json
+                                            )
+
+            self.user_options = load_user_data(
+                                               directory=self.config_dir,
+                                               json_file=self.user_options_json
+                                               )
+
         ic(self.user_data)
         ic(self.user_options)
         ic(self.mc_dir.get())
@@ -123,7 +132,7 @@ class App(ctk.CTk):
                 self.show_directory_frame()
 
         except UserDataException:
-            ctk.CTkLabel(self.registration_frame,
+            ctk.CTkLabel(master=self.registration_frame,
                          text="Не введен логин или пароль.",
                          text_color="red").pack(pady=5)
             self.show_registration_frame()
@@ -135,14 +144,6 @@ class App(ctk.CTk):
             if self.user_data.get("mc_dir"):
                 self.show_options_frame()
 
-            elif not self.user_data.get("mc_dir"):
-                raise UserDirException
-
-        except UserDirException:
-            ctk.CTkLabel(self.directory_frame,
-                         text="Выберите директорию.",
-                         text_color="red").pack(pady=5)
-
         except Exception as e:
             print(f"error: {e}")
 
@@ -153,89 +154,211 @@ class App(ctk.CTk):
 
     def show_registration_frame(self) -> None:
         self.clear_frames()
-        self.registration_frame.pack(fill="both",
-                                     expand=True)
+        self.registration_frame.pack(fill="both", expand=True)
 
-        ctk.CTkLabel(self.registration_frame,
-                     text="Регистрация",
-                     font=("Arial", 18)).pack(pady=10)
+        self.registration_frame.grid_columnconfigure(0, weight=1)
+        self.registration_frame.grid_rowconfigure(0, weight=1)
+        self.registration_frame.grid_rowconfigure(1, weight=1)
+        self.registration_frame.grid_rowconfigure(2, weight=1)
 
-        ctk.CTkLabel(self.registration_frame,
-                     text="Имя пользователя:").pack(pady=5)
-        ctk.CTkEntry(self.registration_frame,
-                     textvariable=self.username_var).pack(pady=5)
+        registration_content = ctk.CTkFrame(master=self.registration_frame)
+        registration_content.grid(row=1, column=0)
 
-        ctk.CTkLabel(self.registration_frame,
-                     text="Пароль:").pack(pady=5)
-        ctk.CTkEntry(self.registration_frame,
-                     textvariable=self.password_var, show="*").pack(pady=5)
+        ctk.CTkLabel(
+            master=registration_content,
+            text="Регистрация",
+            font=self.font,
+        ).grid(row=0,
+               column=0,
+               pady=10)
 
-        ctk.CTkButton(self.registration_frame,
-                      text="Продолжить",
-                      command=self.handle_registration).pack(pady=20)
+        ctk.CTkLabel(
+            master=registration_content,
+            text="Имя пользователя:",
+            font=self.font,
+        ).grid(row=1,
+               column=0,
+               pady=5)
+
+        ctk.CTkEntry(
+            master=registration_content,
+            textvariable=self.username_var,
+            font=self.font,
+        ).grid(row=2,
+               column=0,
+               pady=5)
+
+        ctk.CTkLabel(
+            master=registration_content,
+            text="Пароль:",
+            font=self.font
+        ).grid(row=3,
+               column=0,
+               pady=5)
+
+        ctk.CTkEntry(
+            master=registration_content,
+            textvariable=self.password_var,
+            font=self.font,
+            show="*"
+        ).grid(row=4,
+               column=0,
+               pady=5)
+
+        ctk.CTkButton(
+            master=registration_content,
+            text="Продолжить",
+            font=self.font,
+            command=self.handle_registration
+        ).grid(row=5,
+               column=0,
+               pady=20)
 
     def show_directory_frame(self) -> None:
         self.clear_frames()
         self.directory_frame.pack(fill="both",
                                   expand=True)
 
-        ctk.CTkLabel(self.directory_frame,
-                     text="Выберите директорию для лаунчера",
-                     font=("Arial", 18)).pack(pady=10)
-        ctk.CTkButton(self.directory_frame,
+        self.directory_frame.grid_columnconfigure(0, weight=1)
+        self.directory_frame.grid_rowconfigure(0, weight=1)
+        self.directory_frame.grid_rowconfigure(1, weight=1)
+        self.directory_frame.grid_rowconfigure(2, weight=1)
+
+        directory_content = ctk.CTkFrame(master=self.directory_frame)
+        directory_content.grid(row=1, column=0)
+
+        ctk.CTkButton(master=directory_content,
                       text="Выберите директорию",
-                      command=self.choose_directory).pack(pady=20)
+                      font=self.font,
+                      command=self.choose_directory).grid(
+                                                          row=0,
+                                                          column=0,
+                                                          pady=10,
+        )
 
     def show_options_frame(self) -> None:
         self.clear_frames()
         self.options_frame.pack(fill="both",
                                 expand=True)
 
-        ctk.CTkLabel(self.options_frame,
+        self.options_frame.grid_columnconfigure(0, weight=1)
+        self.options_frame.grid_rowconfigure(0, weight=1)
+        self.options_frame.grid_rowconfigure(1, weight=1)
+        self.options_frame.grid_rowconfigure(2, weight=1)
+
+        option_content = ctk.CTkFrame(master=self.options_frame)
+        option_content.grid(row=1,
+                            column=0)
+
+        ctk.CTkLabel(
+                     master=option_content,
                      text="Настройки для запуска",
-                     font=("Arial", 18)).pack(pady=10)
+                     font=self.font).grid(
+                                    row=0,
+                                    column=0,
+                                    pady=10,
+                                    )
 
-        ctk.CTkLabel(self.options_frame,
-                     text="uuid:\n(необязательно)").pack(pady=5)
-        ctk.CTkEntry(self.options_frame,
+        ctk.CTkLabel(
+                     master=option_content,
+                     text="uuid:\n(необязательно)",
+                     font=self.font).grid(
+                                    row=1,
+                                    column=0,
+                                    pady=5,
+                                    )
+
+        ctk.CTkEntry(
+                     master=option_content,
                      textvariable=self.uuid_var,
-                     show="*").pack(pady=5)
+                     font=self.font,
+                     show="*").grid(
+                                    row=2,
+                                    column=0,
+                                    pady=5,
+                                    )
 
-        ctk.CTkLabel(self.options_frame,
-                     text="токен:\n(необязательно)").pack(pady=5)
-        ctk.CTkEntry(self.options_frame,
+        ctk.CTkLabel(
+                     master=option_content,
+                     text="токен:\n(необязательно)",
+                     font=self.font).grid(
+                                    row=3,
+                                    column=0,
+                                    pady=5,
+                                    )
+
+        ctk.CTkEntry(
+                     master=option_content,
                      textvariable=self.token_var,
-                     show="*").pack(pady=5)
+                     font=self.font,
+                     show="*").grid(
+                                    row=4,
+                                    column=0,
+                                    pady=5,
+                                    )
 
-        ctk.CTkButton(self.options_frame,
+        ctk.CTkButton(
+                      master=option_content,
                       text="Продолжить",
-                      command=self.handle_options).pack(pady=20)
+                      command=self.handle_options).grid(
+                                    row=5,
+                                    column=0,
+                                    pady=10,
+                                    )
 
     def show_main_frame(self) -> None:
         self.clear_frames()
         self.main_frame.pack(fill="both", expand=True)
 
-        ctk.CTkLabel(self.main_frame,
-                     text=f"С возвращением, {self.user_data.get("username")}",
-                     font=self.font).pack(pady=15)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_rowconfigure(1, weight=1)
+        self.main_frame.grid_rowconfigure(2, weight=1)
 
-        if os.path.join(self.user_data.get("mc_dir"), "DGRMClauncher"):
+        self.user_data = load_user_data(
+                     directory=self.config_dir,
+                     json_file=self.user_data_json
+        )
+
+        main_content = ctk.CTkFrame(master=self.main_frame)
+        main_content.grid(row=1,
+                          column=0)
+
+        ctk.CTkLabel(
+                     master=main_content,
+                     text=f"С возвращением, {self.user_data.get("username")}",
+                     font=self.font).grid(
+                                    row=0,
+                                    column=0,
+                                    pady=10,
+                                    )
+
+        if os.path.isdir(os.path.join(self.user_data.get("mc_dir"), "DGRMClauncher")):
             ic(self.user_data.get("mc_dir"))
-            ctk.CTkButton(self.main_frame,
+            ctk.CTkButton(
+                          master=main_content,
                           text="Запустить",
                           font=self.font,
-                          command=lambda: self.launch_mc(
+                          command=lambda: self.run_mc(
                                     mc_dir=self.user_data.get("mc_dir"),
                                     options=self.user_options)
-                          ).pack(pady=20)
+                          ).grid(
+                                    row=1,
+                                    column=0,
+                                    pady=10,
+                                    )
         else:
-            ctk.CTkButton(self.main_frame,
+            ctk.CTkButton(
+                          master=main_content,
                           text="Установить",
                           font=self.font,
-                          command=lambda: self.launch_mc(
+                          command=lambda: self.install_mc(
                                     mc_dir=self.user_data.get("mc_dir"),
-                                    options=self.user_options)
-                          ).pack(pady=20)
+                          )).grid(
+                                    row=1,
+                                    column=0,
+                                    pady=10,
+                                    )
 
     def clear_frames(self) -> None:
         for frame in [self.registration_frame,
@@ -252,16 +375,20 @@ class App(ctk.CTk):
             print(f"Регистрация прошла успешно: {username}")
             # Save user data in the default directory
             self.user_data = {"username": username, "password": password}
-            save_user_data(new_data=self.user_data,
-                           directory=self.default_dir,
-                           json_file="user_data.json")
+            save_user_data(
+                           new_data=self.user_data,
+                           directory=self.config_dir,
+                           json_file=self.user_data_json
+            )
             self.show_directory_frame()
         else:
             if not hasattr(self, "error_label"):
                 # Create the error label if it doesn't exist
-                self.error_label = ctk.CTkLabel(self.registration_frame,
+                self.error_label = ctk.CTkLabel(
+                                                master=self.registration_frame,
                                                 text="Заполните все поля.",
-                                                text_color="red")
+                                                text_color="red"
+                )
                 self.error_label.pack(pady=5)
             else:
                 # Update the existing error label if it already exists
@@ -271,56 +398,96 @@ class App(ctk.CTk):
         username: str = self.username_var.get()
         uuid: str = self.uuid_var.get()
         token: str = self.token_var.get()
+
         self.user_options: dict = {"username": username,
                                    "uuid": uuid,
                                    "token": token}
 
-        save_user_data(new_data=self.user_options,
-                       directory=self.default_dir,
-                       json_file=self.user_options_json)
+        save_user_data(
+                       new_data=self.user_options,
+                       directory=self.config_dir,
+                       json_file=self.user_options_json
+        )
 
         self.show_main_frame()
 
     def choose_directory(self) -> None:
-        mc_dir = filedialog.askdirectory(
+        self.mc_dir = filedialog.askdirectory(
                 title="Выберите директорию для Майнкрафта")
-        self.mc_dir = mc_dir
         ic(self.mc_dir)
         if self.mc_dir:
             self.user_data = {"mc_dir": self.mc_dir}
             print(f"Selected directory: {self.mc_dir}")
             # Save selected directory if needed
             print("Ready to launch or configure Minecraft!")
-            save_user_data(new_data=self.user_data,
-                           directory=self.default_dir,
-                           json_file=self.user_data_json)
+            save_user_data(
+                           new_data=self.user_data,
+                           directory=self.config_dir,
+                           json_file=self.user_data_json
+            )
             self.show_options_frame()
 
-    def launch_mc(self, mc_dir: str, options: dict) -> None:
-        import minecraft_launcher_lib
-        import subprocess
+        elif not self.user_data.get("mc_dir"):
+            ctk.CTkLabel(
+                         master=self.directory_frame,
+                         text="Выберите директорию.",
+                         text_color="red"
+            ).pack(pady=5)
+
+    def install_mc(self, mc_dir: str) -> None:
+        import minecraft_launcher_lib as mc_lib
+
+        def set_status(status: str):
+            print(status)
+
+
+        def set_progress(progress: int):
+            if current_max != 0:
+                print(f"{progress}/{current_max}")
+
+
+        def set_max(new_max: int):
+            global current_max
+            current_max = new_max
+
+        minecraft_directory = mc_lib.utils.get_minecraft_directory()
+
+        callback = {
+            "setStatus": set_status,
+            "setProgress": set_progress,
+            "setMax": set_max
+        }
         version = "1.12.2"
 
         minecraft_directory = os.path.join(mc_dir, "DGRMClauncher")
 
-        # Ensure the directory exists
         os.makedirs(minecraft_directory, exist_ok=True)
 
         # Install the specified Minecraft version
-        minecraft_launcher_lib.install.install_minecraft_version(
+        mc_lib.install.install_minecraft_version(
             versionid=version,
-            minecraft_directory=minecraft_directory
+            minecraft_directory=minecraft_directory,
+            callback=callback
           )
 
-        # Launch Minecraft
+        self.show_main_frame()
+
+    def run_mc(self,mc_dir: str, options: dict) -> None:
+        import minecraft_launcher_lib as mc_lib
+        import subprocess
+
+        version = "1.12.2"
+
+        minecraft_directory = mc_lib.utils.get_minecraft_directory()
+        minecraft_directory = os.path.join(mc_dir, "DGRMClauncher")
+
         subprocess.call(
-            minecraft_launcher_lib.command.get_minecraft_command(
+            mc_lib.command.get_minecraft_command(
                 version=version,
                 minecraft_directory=minecraft_directory,
-                options=options
+                options=options,
               )
           )
-
 
 if __name__ == "__main__":
     app = App()
