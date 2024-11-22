@@ -11,7 +11,7 @@ from exceptions import UserDataException
 # , UserDirException, UserOptionsException
 
 
-def save_user_data(new_data, directory, json_file):
+def save_user_data(new_data: dict, directory: str, json_file: str) -> None:
     user_data_file = os.path.join(directory, json_file)
 
     if not os.path.exists(user_data_file):
@@ -30,7 +30,7 @@ def save_user_data(new_data, directory, json_file):
         json.dump(data, f, indent=4)
 
 
-def load_user_data(directory, json_file, create_if_missing=True):
+def load_user_data(directory: str, json_file: str, create_if_missing: bool =True) -> dict:
     user_data_file = os.path.join(directory, json_file)
 
     if os.path.isfile(user_data_file):
@@ -142,13 +142,6 @@ class App(ctk.CTk):
         except Exception as e:
             print(f"error: {e}")
 
-        try:
-            if self.user_data.get("mc_dir"):
-                self.show_options_frame()
-
-        except Exception as e:
-            print(f"error: {e}")
-
         if (self.user_data.get("username")
                 and self.user_data.get("password")
                 and self.user_data.get("mc_dir")):
@@ -165,6 +158,11 @@ class App(ctk.CTk):
 
         registration_content = ctk.CTkFrame(master=self.registration_frame)
         registration_content.grid(row=1, column=0)
+
+        self.user_data = load_user_data(
+            directory=self.config_dir,
+            json_file=self.user_data_json
+        )
 
         ctk.CTkLabel(
             master=registration_content,
@@ -207,14 +205,65 @@ class App(ctk.CTk):
                column=0,
                pady=5)
 
+        ctk.CTkLabel(
+            master=registration_content,
+            text="uuid:\n(необязательно)",
+            font=self.font,
+        ).grid(row=5,
+               column=0,
+               pady=5)
+
+        ctk.CTkEntry(
+            master=registration_content,
+            textvariable=self.uuid_var,
+            font=self.font,
+        ).grid(row=6,
+               column=0,
+               pady=5)
+
+        ctk.CTkLabel(
+            master=registration_content,
+            text="Токен:\n(необязательно)",
+            font=self.font
+        ).grid(row=7,
+               column=0,
+               pady=5)
+
+        ctk.CTkEntry(
+            master=registration_content,
+            textvariable=self.token_var,
+            font=self.font,
+            show="*"
+        ).grid(row=8,
+               column=0,
+               pady=5)
+
+        ctk.CTkButton(
+            master=registration_content,
+            text="Выберите директорию",
+            font=self.font,
+            command=self.choose_directory
+        ).grid(row=9,
+               column=0,
+               pady=10
+               )
+
+        self.directory_label = ctk.CTkLabel(
+            master=registration_content,
+            text=self.user_data.get("mc_dir", "Не выбрана директория"),
+            font=self.font,
+        )
+        self.directory_label.grid(row=10, column=0, pady=10)
+
         ctk.CTkButton(
             master=registration_content,
             text="Продолжить",
             font=self.font,
             command=self.handle_registration
-        ).grid(row=5,
+        ).grid(row=11,
                column=0,
-               pady=20)
+               pady=20
+               )
 
     def show_directory_frame(self) -> None:
         self.clear_frames()
@@ -372,7 +421,6 @@ class App(ctk.CTk):
         install_content = ctk.CTkFrame(master=self.main_frame)
         install_content.grid(row=0, column=0, padx=20, pady=20)
 
-        # Add a label for installation status
         self.progress_label = ctk.CTkLabel(
             master=install_content,
             text="Установка Minecraft...",
@@ -380,7 +428,6 @@ class App(ctk.CTk):
         )
         self.progress_label.grid(row=0, column=0, pady=10)
 
-        # Add a slider for progress
         self.progress_slider = ctk.CTkSlider(
             master=install_content,
             from_=0,
@@ -389,6 +436,9 @@ class App(ctk.CTk):
             width=300
         )
         self.progress_slider.grid(row=1, column=0, pady=10)
+
+    def show_toolbar_frame(self) -> None:
+        ...
 
     def clear_frames(self) -> None:
         for frame in [self.registration_frame,
@@ -403,7 +453,6 @@ class App(ctk.CTk):
 
         if username and password:
             print(f"Регистрация прошла успешно: {username}")
-            # Save user data in the default directory
             self.user_data = {"username": username, "password": password}
             save_user_data(
                            new_data=self.user_data,
@@ -423,6 +472,7 @@ class App(ctk.CTk):
             else:
                 # Update the existing error label if it already exists
                 self.error_label.configure(text="Заполните все поля.")
+        self.handle_options()
 
     def handle_options(self) -> None:
         username: str = self.username_var.get()
@@ -442,27 +492,27 @@ class App(ctk.CTk):
         self.show_main_frame()
 
     def choose_directory(self) -> None:
-        self.mc_dir = filedialog.askdirectory(
-                title="Выберите директорию для Майнкрафта")
-        ic(self.mc_dir)
-        if self.mc_dir:
-            self.user_data = {"mc_dir": self.mc_dir}
-            print(f"Selected directory: {self.mc_dir}")
-            # Save selected directory if needed
+        mc_dir = filedialog.askdirectory(title="Выберите директорию для Майнкрафта")
+        if mc_dir:
+            self.user_data["mc_dir"] = mc_dir
+            print(f"Selected directory: {mc_dir}")
             print("Ready to launch or configure Minecraft!")
-            save_user_data(
-                           new_data=self.user_data,
-                           directory=self.config_dir,
-                           json_file=self.user_data_json
-            )
-            self.show_options_frame()
 
-        elif not self.user_data.get("mc_dir"):
-            ctk.CTkLabel(
-                         master=self.directory_frame,
-                         text="Выберите директорию.",
-                         text_color="red"
-            ).pack(pady=5)
+            save_user_data(
+                new_data=self.user_data,
+                directory=self.config_dir,
+                json_file=self.user_data_json
+            )
+
+            if hasattr(self, "directory_label"):
+                self.directory_label.configure(text=mc_dir)
+            else:
+                print("Warning: Directory label not initialized!")
+        else:
+            if hasattr(self, "directory_label"):
+                self.directory_label.configure(text="Не выбрана директория")
+            else:
+                print("Warning: No directory chosen and label not initialized!")
 
     def install_mc(self, mc_dir: str) -> None:
         import threading
