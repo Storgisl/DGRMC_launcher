@@ -6,3 +6,5 @@ DGRMClauncher
 launcher.spec
 launcher.exe
 launcher
+venv
+.gitignore
