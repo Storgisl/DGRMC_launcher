@@ -15,3 +15,9 @@ class UserOptionsException(CustomException):
     def __init__(self, message="User options error", error_code=2):
         # You can pass a default message or customize it when raising the exception
         super().__init__(message, error_code)
+
+
+class UserDirException(CustomException):
+    def __init__(self, message="User dir error", error_code=3):
+        # You can pass a default message or customize it when raising the exception
+        super().__init__(message, error_code)
