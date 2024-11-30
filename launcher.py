@@ -424,18 +424,16 @@ class App(ctk.CTk):
         self.progress_label = ctk.CTkLabel(
             master=install_content,
             text="Установка Minecraft...",
-            font=self.font
+            font=self.font,
         )
         self.progress_label.grid(row=0, column=0, pady=10)
 
-        self.progress_slider = ctk.CTkSlider(
+        self.progress_bar = ctk.CTkProgressBar(
             master=install_content,
-            from_=0,
-            to=100,
-            number_of_steps=100,
-            width=300
+            width=300,
+            progress_color="purple",
         )
-        self.progress_slider.grid(row=1, column=0, pady=10)
+        self.progress_bar.grid(row=1, column=0, pady=10)
 
     def show_toolbar_frame(self) -> None:
         ...
@@ -444,7 +442,8 @@ class App(ctk.CTk):
         for frame in [self.registration_frame,
                       self.directory_frame,
                       self.options_frame,
-                      self.main_frame]:
+                      self.main_frame,
+                      ]:
             frame.pack_forget()
 
     def handle_registration(self) -> None:
@@ -462,7 +461,6 @@ class App(ctk.CTk):
             self.show_directory_frame()
         else:
             if not hasattr(self, "error_label"):
-                # Create the error label if it doesn't exist
                 self.error_label = ctk.CTkLabel(
                                                 master=self.registration_frame,
                                                 text="Заполните все поля.",
@@ -470,7 +468,6 @@ class App(ctk.CTk):
                 )
                 self.error_label.pack(pady=5)
             else:
-                # Update the existing error label if it already exists
                 self.error_label.configure(text="Заполните все поля.")
         self.handle_options()
 
@@ -495,8 +492,8 @@ class App(ctk.CTk):
         mc_dir = filedialog.askdirectory(title="Выберите директорию для Майнкрафта")
         if mc_dir:
             self.user_data["mc_dir"] = mc_dir
-            print(f"Selected directory: {mc_dir}")
-            print("Ready to launch or configure Minecraft!")
+            print(f"Выбранная дирректория: {mc_dir}")
+            print("Minecraft готов к запуску!")
 
             save_user_data(
                 new_data=self.user_data,
@@ -518,9 +515,8 @@ class App(ctk.CTk):
         import threading
         import minecraft_launcher_lib as mc_lib
 
-        # Ensure progress_label and progress_slider are initialized
-        if not self.progress_label or not self.progress_slider:
-            self.show_installation_frame()
+
+        self.show_installation_frame()
 
         def installation_task():
             version = "1.12.2"
@@ -531,25 +527,25 @@ class App(ctk.CTk):
                 mc_lib.install.install_minecraft_version(
                     versionid=version,
                     minecraft_directory=minecraft_directory,
-                    callback={"setStatus": lambda status: print(status),
-                              "setProgress": progress_callback,
-                              "done": done_callback}
+                    callback={"setStatus": lambda status: self.show_main_frame()
+                                                                            if status == "Installation complete"
+                                                                                else print(status),
+                              "setProgress": lambda progress: progress_callback(progress),
+                              "setMax": set_max,
+                              }
                 )
             except Exception as e:
                 print(f"Error during installation: {e}")
                 self.progress_label.configure(text="Установка прервана. Попробуйте снова.")
 
+        def set_max(new_max: int):
+            global current_max
+            current_max = new_max
+
         def progress_callback(progress: int):
-            """Update the slider based on progress."""
-            self.progress_slider.set(progress)
-            self.progress_label.configure(text=f"Установка... {progress}%")
+            normalized_progress = progress / current_max
+            self.progress_bar.set(normalized_progress)
 
-        def done_callback():
-            """Handle completion."""
-            self.progress_label.configure(text="Установка завершена!")
-            self.show_main_frame()
-
-        # Run installation in a separate thread
         threading.Thread(target=installation_task, daemon=True).start()
 
     def run_mc(self,mc_dir: str, options: dict) -> None:
