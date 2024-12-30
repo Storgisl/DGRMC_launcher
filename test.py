@@ -1,3 +1,19 @@
+#==============================================================
+# Крч как я думаю надо сделать так,
+# добавить запись пути к майнкрафту в json
+# например в юзер дату и через получение пути
+# запускать майн.
+# Я переход на мейн скрин сдеал после установки.
+# Мб придется сделать так чтобы майн после скачки запукался
+# после загрузки закрывался и начиналась установка форджа
+# после релоад лаунчера и все можно бегать.
+
+# Как вариант чтобы после полноценной установки майна с форджем
+# изменялись параметры запуска майнкрафта, чтобы чел сразу на
+# сервак конектился.
+
+# Взаимодействия с серверной бд (MySQL) доделаем на днях)
+#===============================================================
 from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel, QSlider, QFileDialog, QProgressBar
 from PySide6.QtCore import Qt, QJsonDocument, QFile, QIODevice, Signal, QObject, QThread
 from PySide6.QtGui import QPainter, QPixmap
@@ -34,16 +50,9 @@ class Launcher(QMainWindow):
         self.setFixedWidth(800)
 
     #  background setup
-    # какое-то рекурсивное говно с фоном которое не дает качать майнкампф)
-    # def paintEvent(self, event) -> None:
-    #     self.background_image = QPixmap("back.png")
-    #     painter = QPainter(self)
-    #     painter.drawPixmap(0, 0, self.background_image)
-    #     super().paintEvent(event)
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         try:
-            # Масштабирование изображения под размер окна
             scaled_image = self.background_image.scaled(self.size(), Qt.KeepAspectRatioByExpanding)
             painter.drawPixmap(0, 0, scaled_image)
         finally:
@@ -105,7 +114,7 @@ class Launcher(QMainWindow):
         # Создаем страницы и добавляем их в stacked_widget
         self.registration_page = RegistrationPage(self, self.username_var, self.password_var, self.user_data_json, self.config_dir)
         self.login_page = LoginPage()
-        self.download_page = DownloadPage(self.config_dir, self.user_data)
+        self.download_page = DownloadPage(self, self.config_dir, self.user_data)
         self.main_page = MainPage()
         self.settings_page = SettingsPage()
 
@@ -250,7 +259,7 @@ class RegistrationPage(QWidget):
     
     def handle_already_registered(self):
         print("User already registered. Redirecting to login...")
-        Launcher.show_login_frame()
+        self.launcher.show_login_frame()
 
     def show_error(self, message: str) -> None:
         """Показать ошибку на экране регистрации."""
@@ -268,10 +277,10 @@ class RegistrationPage(QWidget):
 
         save_user_data(
             new_data=self.user_options,
-            directory=Launcher.config_dir,
-            json_file=Launcher.user_options_json
+            directory=self.config_dir,
+            json_file=self.user_options_json
         )
-        Launcher.show_main_frame()
+        self.launcher.show_main_frame()
 
 #===================================================================================================================
 # LOGIN FRAME
@@ -293,9 +302,11 @@ class DownloadPage(QWidget):
     set_status_signal = Signal(str)
     set_progress_signal = Signal(int)
     set_max_signal = Signal(int)
+    switch_to_main_page_signal = Signal()  # Сигнал для переключения на MainPage
 
-    def __init__(self, config_dir, user_data):
+    def __init__(self, launcher, config_dir, user_data):
         super().__init__()
+        self.launcher = launcher 
         self.config_dir = config_dir
         self.user_data = user_data
 
@@ -334,6 +345,7 @@ class DownloadPage(QWidget):
         self.set_status_signal.connect(self.set_status)
         self.set_progress_signal.connect(self.set_progress)
         self.set_max_signal.connect(self.set_max)
+        self.switch_to_main_page_signal.connect(self.show_main_page)
 
     def choose_directory(self) -> None:
         mc_dir = QFileDialog.getExistingDirectory(self, "Choose Minecraft Directory")
@@ -364,10 +376,14 @@ class DownloadPage(QWidget):
                         "setMax": lambda max_value: self.set_max_signal.emit(max_value),
                     }
                 )
+                # После завершения установки Minecraft, генерируем сигнал для перехода на MainPage
+                self.switch_to_main_page_signal.emit()  # Это вызовет переключение на MainPage
+
             except Exception as e:
                 print(f"Error during installation: {e}")
                 self.set_status_signal.emit("Installation failed. Please try again.")
 
+        # Запуск установки Minecraft в отдельном потоке
         thread = threading.Thread(target=installation_task, daemon=True)
         thread.start()
 
@@ -387,17 +403,25 @@ class DownloadPage(QWidget):
                 print(f"Forge {forge_version} can't be installed automatically.")
                 mc_lib.forge.run_forge_installer(forge_version)
 
+        # Запуск установки Forge в отдельном потоке
         thread = threading.Thread(target=forge_task, daemon=True)
         thread.start()
 
     def set_status(self, status: str):
+        """Метод для обновления статуса (вызывается через сигнал)"""
         self.progress_label.setText(f"Status: {status}")
 
     def set_progress(self, progress: int):
+        """Метод для обновления прогресса (вызывается через сигнал)"""
         self.progress_bar.setValue(progress)
 
     def set_max(self, new_max: int):
+        """Метод для установки максимума прогресс-бара (вызывается через сигнал)"""
         self.progress_bar.setMaximum(new_max)
+
+    def show_main_page(self):
+        """Переключаемся на MainPage в основном потоке"""
+        self.launcher.show_main_frame()
 
 #===================================================================================================================
 # MAIN FRAME
@@ -406,14 +430,28 @@ class DownloadPage(QWidget):
 class MainPage(QWidget):
     def __init__(self):
         super().__init__()
+
         layout = QVBoxLayout()
-        layout.addWidget(QPushButton("Main Page"))
+
+        # Кнопка для запуска Minecraft
+        self.run_button = QPushButton("Запустить Minecraft")
+        self.run_button.clicked.connect(self.run_mc)  # Связываем кнопку с функцией
+        layout.addWidget(self.run_button)
+
+        # Метка для отображения статуса
+        self.status_label = QLabel("Статус: Готово")
+        layout.addWidget(self.status_label)
+
         self.setLayout(layout)
 
-    def run_mc(self, mc_dir: str, options: dict) -> None:
-        """
-        Запускает Minecraft в отдельном потоке, чтобы не блокировать UI.
-        """
+    def set_status(self, status: str):
+        """Метод для обновления статуса на UI"""
+        self.status_label.setText(f"Статус: {status}")
+
+    def run_mc(self, mc_dir: str, options: dict = None) -> None:
+        if options is None:
+            options = {}  # Использовать пустой словарь, если options не передан
+
         def run_minecraft():
             version = "1.20.1"
             minecraft_directory = os.path.join(mc_dir, "DGRMClauncher")
@@ -426,7 +464,6 @@ class MainPage(QWidget):
             )
 
             try:
-                # Запуск Minecraft через subprocess
                 self.set_status("Запуск Minecraft...")
                 subprocess.call(command)
                 self.set_status("Minecraft запущен!")
