@@ -20,6 +20,7 @@ from PySide6.QtGui import QPainter, QPixmap
 from icecream import ic
 
 import os
+import shutil
 import time
 import subprocess
 import platform
@@ -48,6 +49,7 @@ class Launcher(QMainWindow):
             print("Ошибка: Изображение back.png не найдено или повреждено")
         self.registration_page.registration_complete.connect(self.on_registration_complete)
         self.download_page.download_complete.connect(self.on_download_complete)
+        self.main_page.delete_complete.connect(self.on_delete_complete)
 
     #  window setup
     def setupWindow(self) -> None:
@@ -147,11 +149,13 @@ class Launcher(QMainWindow):
 
 
     def on_registration_complete(self):
-        print("Registration completed. Switching to download frame...")
         self.show_download_frame()
 
     def on_download_complete(self):
         self.show_main_frame()
+
+    def on_delete_complete(self):
+        self.show_download_frame()
 
     #  show registration frame
     def show_registration_frame(self):
@@ -356,6 +360,7 @@ class DownloadPage(Page):
             self.directory_label.setText("Directory not chosen")
             print("No directory chosen!")
 
+
     def install_mc(self, mc_dir: str) -> None:
         if not self.mc_dir or self.mc_dir == "Directory not chosen":
             self.progress_label.setText("Please choose a directory first!")
@@ -370,25 +375,46 @@ class DownloadPage(Page):
             retry_delay = 1
             for attempt in range(max_retries):
                 try:
-                    mc_lib.install.install_minecraft_version(
-                        versionid=version,
-                        minecraft_directory=minecraft_directory,
-                        callback={
+                    # mc_lib.install.install_minecraft_version(
+                    #     versionid=version,
+                    #     minecraft_directory=minecraft_directory,
+                    #     callback={
+                    #         "setStatus": lambda status: self.set_status_signal.emit(status),
+                    #         "setProgress": lambda progress: self.set_progress_signal.emit(progress),
+                    #         "setMax": lambda max_value: self.set_max_signal.emit(max_value),
+                    #     }
+                    # )
+                    #
+                    # # Run Minecraft in the background
+                    # command = mc_lib.command.get_minecraft_command(
+                    #     version=version,
+                    #     minecraft_directory=minecraft_directory,
+                    #     options=self.user_data,
+                    # )
+
+                    try:
+                        # self.set_status_signal.emit("Запуск Minecraft...")
+                        # process = subprocess.Popen(command)
+                        # process.wait()  # Wait for Minecraft to finish and exit automatically
+                        # self.set_status_signal.emit("Minecraft завершен!")
+
+                        forge_version = mc_lib.forge.find_forge_version(version)
+                        if mc_lib.forge.supports_automatic_install(forge_version):
+                            callback={
                             "setStatus": lambda status: self.set_status_signal.emit(status),
                             "setProgress": lambda progress: self.set_progress_signal.emit(progress),
                             "setMax": lambda max_value: self.set_max_signal.emit(max_value),
                         }
-                    )
+                            mc_lib.forge.install_forge_version(forge_version, path=minecraft_directory, callback=callback)
+                        else:
+                            print(f"Forge {forge_version} can't be installed automatically.")
+                            mc_lib.forge.run_forge_installer(forge_version)
 
-                    forge_version = mc_lib.forge.find_forge_version(version)
-                    if mc_lib.forge.supports_automatic_install(forge_version):
-                        callback = {"setStatus": lambda text: self.set_status_signal.emit(text)}
-                        mc_lib.forge.install_forge_version(forge_version, path=minecraft_directory, callback=callback)
-                    else:
-                        print(f"Forge {forge_version} can't be installed automatically.")
-                        mc_lib.forge.run_forge_installer(forge_version)
-                    self.download_complete.emit()
-                    self.set_status_signal.emit("Installation completed successfully!")
+                        self.download_complete.emit()
+                        self.set_status_signal.emit("Installation completed successfully!")
+                    except Exception as e:
+                        self.set_status_signal.emit(f"Ошибка при запуске Minecraft: {e}")
+
                     break
                 except Exception as e:
                     print(f"Error during installation attempt {attempt + 1}: {e}")
@@ -398,7 +424,6 @@ class DownloadPage(Page):
                         time.sleep(retry_delay)
                     else:
                         self.set_status_signal.emit("Installation failed after multiple attempts. Please try again.")
-
 
         # Starting installation task in a separate thread
         thread = threading.Thread(target=installation_task, daemon=True)
@@ -431,7 +456,7 @@ class DownloadPage(Page):
         dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         os.makedirs(dgrmc_dir, exist_ok=True)
 
-        required_folders = ["assets", "libraries", "resourcepacks", "runtime", "saves", "versions"]
+        required_folders = ["assets", "libraries", "runtime", "versions"]
         if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
            ic(dgrmc_dir)
            return True
@@ -443,6 +468,7 @@ class DownloadPage(Page):
 #===================================================================================================================
 
 class MainPage(Page):
+    delete_complete = Signal()
     def __init__(self):
         super().__init__()
 
@@ -450,9 +476,11 @@ class MainPage(Page):
 
         # Кнопка для запуска Minecraft
         self.run_button = QPushButton("Запустить Minecraft")
-        self.run_button.clicked.connect(self.run_mc)  # Связываем кнопку с функцией
+        self.run_button.clicked.connect(self.run_mc)
+        self.delete_button = QPushButton("Удалить Minecraft")
+        self.delete_button.clicked.connect(self.delete_mc)
         layout.addWidget(self.run_button)
-
+        layout.addWidget(self.delete_button)
         # Метка для отображения статуса
         self.status_label = QLabel("Статус: Готово")
         layout.addWidget(self.status_label)
@@ -464,18 +492,17 @@ class MainPage(Page):
         self.status_label.setText(f"Статус: {status}")
 
     def run_mc(self, mc_dir: str, options: dict = None) -> None:
-        if options is None:
-            options = {}  # Использовать пустой словарь, если options не передан
-
         def run_minecraft():
             version = "1.20.1"
+            forge_version = mc_lib.forge.find_forge_version(version)
+            forge_vers = mc_lib.forge.forge_to_installed_version(forge_version)
             minecraft_directory = os.path.join(self.mc_dir, "DGRMClauncher")
             os.makedirs(minecraft_directory, exist_ok=True)
             # Получение команды для запуска Minecraft
             command = mc_lib.command.get_minecraft_command(
-                version=version,
+                version=forge_vers,
                 minecraft_directory=minecraft_directory,
-                options=options,
+                options=self.user_data,
             )
 
             try:
@@ -488,6 +515,13 @@ class MainPage(Page):
         # Запуск Minecraft в отдельном потоке
         thread = threading.Thread(target=run_minecraft, daemon=True)
         thread.start()
+
+    def delete_mc(self):
+        try:
+            shutil.rmtree(os.path.join(self.mc_dir, "DGRMClauncher"))
+            self.delete_complete.emit()
+        except Exception as e:
+            ic(f"Error: {e}")
 
 #===================================================================================================================
 # SETTINGS FRAME
