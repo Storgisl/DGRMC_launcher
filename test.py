@@ -211,9 +211,9 @@ class Page(QWidget):
             directory=self.config_dir,
             json_file=self.user_data_json
         )
-        self.username_var = self.user_data.get("username")
-        self.password_var = self.user_data.get("password")
-        self.mc_dir = self.user_data.get("mc_dir")
+        self.username_var = self.user_data.get("username", "")
+        self.password_var = self.user_data.get("password", "")
+        self.mc_dir = self.user_data.get("mc_dir", "")
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: red;")
 
