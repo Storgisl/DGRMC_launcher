@@ -375,47 +375,21 @@ class DownloadPage(Page):
             retry_delay = 1
             for attempt in range(max_retries):
                 try:
-                    # mc_lib.install.install_minecraft_version(
-                    #     versionid=version,
-                    #     minecraft_directory=minecraft_directory,
-                    #     callback={
-                    #         "setStatus": lambda status: self.set_status_signal.emit(status),
-                    #         "setProgress": lambda progress: self.set_progress_signal.emit(progress),
-                    #         "setMax": lambda max_value: self.set_max_signal.emit(max_value),
-                    #     }
-                    # )
-                    #
-                    # # Run Minecraft in the background
-                    # command = mc_lib.command.get_minecraft_command(
-                    #     version=version,
-                    #     minecraft_directory=minecraft_directory,
-                    #     options=self.user_data,
-                    # )
+                    forge_version = mc_lib.forge.find_forge_version(version)
+                    if mc_lib.forge.supports_automatic_install(forge_version):
+                        callback={
+                        "setStatus": lambda status: self.set_status_signal.emit(status),
+                        "setProgress": lambda progress: self.set_progress_signal.emit(progress),
+                        "setMax": lambda max_value: self.set_max_signal.emit(max_value),
+                    }
+                        mc_lib.forge.install_forge_version(forge_version, path=minecraft_directory, callback=callback)
+                    else:
+                        print(f"Forge {forge_version} can't be installed automatically.")
+                        mc_lib.forge.run_forge_installer(forge_version)
 
-                    try:
-                        # self.set_status_signal.emit("Запуск Minecraft...")
-                        # process = subprocess.Popen(command)
-                        # process.wait()  # Wait for Minecraft to finish and exit automatically
-                        # self.set_status_signal.emit("Minecraft завершен!")
+                    self.download_complete.emit()
+                    self.set_status_signal.emit("Installation completed successfully!")
 
-                        forge_version = mc_lib.forge.find_forge_version(version)
-                        if mc_lib.forge.supports_automatic_install(forge_version):
-                            callback={
-                            "setStatus": lambda status: self.set_status_signal.emit(status),
-                            "setProgress": lambda progress: self.set_progress_signal.emit(progress),
-                            "setMax": lambda max_value: self.set_max_signal.emit(max_value),
-                        }
-                            mc_lib.forge.install_forge_version(forge_version, path=minecraft_directory, callback=callback)
-                        else:
-                            print(f"Forge {forge_version} can't be installed automatically.")
-                            mc_lib.forge.run_forge_installer(forge_version)
-
-                        self.download_complete.emit()
-                        self.set_status_signal.emit("Installation completed successfully!")
-                    except Exception as e:
-                        self.set_status_signal.emit(f"Ошибка при запуске Minecraft: {e}")
-
-                    break
                 except Exception as e:
                     print(f"Error during installation attempt {attempt + 1}: {e}")
                     self.set_status_signal.emit(f"Attempt {attempt + 1} failed. Retrying in {retry_delay} seconds...")
