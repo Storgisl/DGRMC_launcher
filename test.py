@@ -14,9 +14,9 @@
 
 # Взаимодействия с серверной бд (MySQL) доделаем на днях)
 #===============================================================
-from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel, QSlider, QFileDialog, QProgressBar
+from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel, QSlider, QFileDialog, QProgressBar, QFrame, QGraphicsDropShadowEffect
 from PySide6.QtCore import Qt, QJsonDocument, QFile, QIODevice, Signal, QObject, QThread
-from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtGui import QPainter, QPixmap, QFontDatabase, QFont, QColor
 from icecream import ic
 
 import os
@@ -31,10 +31,10 @@ from data import save_user_data, load_user_data
 from exceptions import UserDataException, UserDirException, UserOptionsException, CustomException
 
 from dataclasses import dataclass
+
 #===================================================================================================================
 # MAIN LAUNCHER CLASS
 #===================================================================================================================
-
 
 class Launcher(QMainWindow):
     def __init__(self):
@@ -44,7 +44,7 @@ class Launcher(QMainWindow):
         self.setupWidgets()
         self.check_user_status()
         self.check_download_status()
-        self.background_image = QPixmap("back.png")  # Кэшируем изображение
+        self.background_image = QPixmap("back.png")
         if not self.background_image or self.background_image.isNull():
             print("Ошибка: Изображение back.png не найдено или повреждено")
         self.registration_page.registration_complete.connect(self.on_registration_complete)
@@ -147,7 +147,6 @@ class Launcher(QMainWindow):
         except Exception as e:
                 print(f"error {e}")
 
-
     def on_registration_complete(self):
         self.show_download_frame()
 
@@ -200,9 +199,6 @@ class Launcher(QMainWindow):
         self.login_page.hide()
         self.settings_page.hide()
 
-#===================================================================================================================
-# REGISTRATION FRAME
-#===================================================================================================================
 class Page(QWidget):
     def __init__(self):
         super().__init__()
@@ -221,36 +217,144 @@ class Page(QWidget):
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: red;")
 
+#===================================================================================================================
+# REGISTRATION FRAME
+#===================================================================================================================
+
 class RegistrationPage(Page):
     registration_complete = Signal()
 
     def __init__(self):
         super().__init__()
-        self.username_text = QLineEdit()
-        self.password_text = QLineEdit()
-        # Кнопки
-        self.register_button = QPushButton("ENTER")
-        self.register_button.clicked.connect(self.handle_registration)
+
+        # шрифт
+        font_id = QFontDatabase.addApplicationFont("PatrickHandSC-Regular.ttf")
+        if font_id == -1:
+            print("Не удалось загрузить шрифт!")
+        font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+        custom_font_label = QFont(font_family)
+        custom_font_label.setPointSize(64)
+        custom_font_button = QFont(font_family)
+        custom_font_button.setPointSize(64)
+
+        # Основной фрейм для всех элементов
+        self.main_frame = QFrame()
+        self.main_frame.setFrameShape(QFrame.StyledPanel)
+        self.main_frame.setFrameShadow(QFrame.Raised)
+        self.main_frame.setStyleSheet("""
+            QFrame {
+                background-color: #342F2F;
+                border-radius: 50px;
+                padding: 10px;
+                height: 768px;
+            }
+        """)
+
+        self.main_frame.setFixedSize(400, 500)
+
+        # Создаем эффект тени
+        shadow_effect = QGraphicsDropShadowEffect()
+        shadow_effect.setBlurRadius(1)  # Радиус размытия тени
+        shadow_effect.setColor(QColor("#6D0088"))  # Цвет тени
+        shadow_effect.setOffset(0, 0)  # Смещение тени
+
+        # Применяем эффект к фрейму
+        self.main_frame.setGraphicsEffect(shadow_effect)
+
+        # Лейаут для фрейма
+        self.frame_layout = QVBoxLayout(self.main_frame)
+        self.frame_layout.setSpacing(15)
 
         # Заголовок
         self.title_label = QLabel("REGISTRATION")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                font-size: 55px;
+                color: #cb92e5;
+            }
+        """)
+        self.title_label.setFont(custom_font_label)
 
-        # Установим стиль для кнопки "ENTER"
-        self.register_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
+        # Текстовые поля
+        self.username_text = QLineEdit()
+        self.username_text.setPlaceholderText("Enter username")
+        self.username_text.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+            }
+        """)
 
-        # Создаем компоновку
+        self.password_text = QLineEdit()
+        self.password_text.setPlaceholderText("Enter password")
+        self.password_text.setEchoMode(QLineEdit.Password)
+        self.password_text.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+            }
+        """)
+
+        # Кнопка для тех кто уже смешарик
+        self.already_button = QPushButton("I`M ALREADY REGISTERED")
+        self.already_button.setStyleSheet("""
+            QPushButton {
+                background-color: #342f2f;
+                color: #cb92e5;
+                font-size: 24px;
+                border: none;
+                margin-top: 20px;
+                underline: true;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+            }
+        """)
+        self.already_button.setFont(custom_font_button)
+        self.already_button.clicked.connect(self.handle_already)
+
+        # Кнопка регистрации
+        self.register_button = QPushButton("ENTER")
+        self.register_button.setStyleSheet("""
+            QPushButton {
+                background-color: #342f2f;
+                color: #cb92e5;
+                font-weight: bold;
+                font-size: 48px;
+                border: 2px solid #cb92e5;
+                border-radius: 20px;
+                margin-top: 20px;
+                min-width: 150px;
+                min-height: 30px;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+                border: 2px solid #e2a1ff;
+            }
+        """)
+        self.register_button.setFont(custom_font_button)
+        self.register_button.clicked.connect(self.handle_registration)
+
+        # Добавляем виджеты во фрейм
+        self.frame_layout.addWidget(self.title_label, alignment=Qt.AlignTop)
+        self.frame_layout.addWidget(self.username_text)
+        self.frame_layout.addWidget(self.password_text)
+        self.frame_layout.addWidget(self.already_button)
+        self.frame_layout.addWidget(self.register_button)
+
+        # Основной лейаут страницы
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)  # Центрируем весь интерфейс
+        layout.addWidget(self.main_frame)  # Добавляем фрейм на страницу
 
-        # Добавляем виджеты
-        layout.addWidget(self.title_label)
-        layout.addWidget(self.username_text)
-        layout.addWidget(self.password_text)
-        layout.addWidget(self.register_button)
-        layout.addWidget(self.error_label)
-
-        # Устанавливаем layout для текущего виджета
+        # Устанавливаем основной лейаут
         self.setLayout(layout)
+
+    def handle_already(self) -> None:
+        pass
 
     def handle_registration(self) -> None:
         username = self.username_text.text()
@@ -276,7 +380,6 @@ class RegistrationPage(Page):
             return  False
 
     def show_error(self, message: str) -> None:
-        """Показать ошибку на экране регистрации."""
         if not self.error_label:
             self.error_label = QLabel()
             self.error_label.setStyleSheet("color: red;")
@@ -331,11 +434,6 @@ class DownloadPage(Page):
         self.install_mc_button = QPushButton("Install Minecraft")
         self.install_mc_button.clicked.connect(lambda: self.install_mc(self.mc_dir))
         layout.addWidget(self.install_mc_button)
-
-        # Кнопка для установки Forge
-        # self.install_forge_button = QPushButton("Install Forge")
-        # self.install_forge_button.clicked.connect(lambda: self.install_forge(self.mc_dir))
-        # layout.addWidget(self.install_forge_button)
 
         # Прогресс-бар и метка статуса
         self.progress_label = QLabel("Status: Waiting")
@@ -403,15 +501,12 @@ class DownloadPage(Page):
         thread = threading.Thread(target=installation_task, daemon=True)
         thread.start()
     def set_status(self, status: str):
-        """Метод для обновления статуса (вызывается через сигнал)"""
         self.progress_label.setText(f"Status: {status}")
 
     def set_progress(self, progress: int):
-        """Метод для обновления прогресса (вызывается через сигнал)"""
         self.progress_bar.setValue(progress)
 
     def set_max(self, new_max: int):
-        """Метод для установки максимума прогресс-бара (вызывается через сигнал)"""
         self.progress_bar.setMaximum(new_max)
 
     def check_dirs(self, directory: str, folders: list) -> bool:
@@ -437,6 +532,7 @@ class DownloadPage(Page):
         else:
            ic(f"Missing required folders in '{dgrmc_dir}'")
            return False
+
 #===================================================================================================================
 # MAIN FRAME
 #===================================================================================================================
@@ -462,7 +558,6 @@ class MainPage(Page):
         self.setLayout(layout)
 
     def set_status(self, status: str):
-        """Метод для обновления статуса на UI"""
         self.status_label.setText(f"Статус: {status}")
 
     def run_mc(self, mc_dir: str, options: dict = None) -> None:
@@ -507,7 +602,6 @@ class SettingsPage(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(QPushButton("Settings"))
         self.setLayout(layout)
-
 
 if __name__ == "__main__":
     app = QApplication([])
