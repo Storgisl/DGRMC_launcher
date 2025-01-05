@@ -45,7 +45,7 @@ class DownloadPage(Page):
 
         self.install_mc_button = QPushButton("Install Minecraft")
         self.install_mc_button.clicked.connect(lambda: self.install_mc(
-            directory=self.mc_dir))
+            mc_dir=self.mc_dir))
         layout.addWidget(self.install_mc_button)
 
         self.progress_label = QLabel("Status: Waiting")
@@ -60,6 +60,7 @@ class DownloadPage(Page):
                                                   "Choose Minecraft Directory")
         if mc_dir:
             self.directory_label.setText(mc_dir)
+            self.mc_dir = mc_dir
             print(f"Selected directory: {mc_dir}")
             save_user_data(
                 new_data={"mc_dir": mc_dir},
@@ -71,7 +72,7 @@ class DownloadPage(Page):
             print("No directory chosen!")
 
     def install_mc(self, mc_dir: str) -> None:
-        if not self.mc_dir or self.mc_dir == "Directory not chosen":
+        if not self.mc_dir or self.mc_dir == "":
             self.progress_label.setText("Please choose a directory first!")
             return
 

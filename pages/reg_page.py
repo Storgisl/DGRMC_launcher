@@ -2,11 +2,11 @@ import sys
 import os
 
 from PySide6.QtWidgets import QLineEdit, QPushButton, QVBoxLayout, QLabel
+from PySide6.QtCore import Qt
 from PySide6.QtCore import Signal
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from manip_data.save_user_data import save_user_data
-from manip_data.load_user_data import load_user_data
 from .page import Page
 
 
@@ -30,17 +30,90 @@ class RegistrationPage(Page):
         color: white; \
         font-weight: bold;")
 
-        # Создаем компоновку
+        self.title_label = QLabel("REGISTRATION")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                font-size: 55px;
+                color: #cb92e5;
+            }
+        """)
+
+        self.title_label.setFont(self.custom_font_label)
+
+        # Текстовые поля
+        self.username_text = QLineEdit()
+        self.username_text.setPlaceholderText("Enter username")
+        self.username_text.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+            }
+        """)
+
+        self.password_text = QLineEdit()
+        self.password_text.setPlaceholderText("Enter password")
+        self.password_text.setEchoMode(QLineEdit.Password)
+        self.password_text.setStyleSheet("""
+            QLineEdit {
+                padding: 8px;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+            }
+        """)
+
+        # Кнопка для тех кто уже смешарик
+        self.already_button = QPushButton("I`M ALREADY REGISTERED")
+        self.already_button.setStyleSheet("""
+            QPushButton {
+                background-color: #342f2f;
+                color: #cb92e5;
+                font-size: 24px;
+                border: none;
+                margin-top: 20px;
+                underline: true;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+            }
+        """)
+        self.already_button.setFont(self.custom_font_button)
+        #self.already_button.clicked.connect(self.handle_already)
+
+        # Кнопка регистрации
+        self.register_button = QPushButton("ENTER")
+        self.register_button.setStyleSheet("""
+            QPushButton {
+                background-color: #342f2f;
+                color: #cb92e5;
+                font-weight: bold;
+                font-size: 48px;
+                border: 2px solid #cb92e5;
+                border-radius: 20px;
+                margin-top: 20px;
+                min-width: 150px;
+                min-height: 30px;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+                border: 2px solid #e2a1ff;
+            }
+        """)
+        self.register_button.setFont(self.custom_font_button)
+        self.register_button.clicked.connect(self.handle_registration)
+
+        # Добавляем виджеты во фрейм
+        self.frame_layout.addWidget(self.title_label, alignment=Qt.AlignTop)
+        self.frame_layout.addWidget(self.username_text)
+        self.frame_layout.addWidget(self.password_text)
+        self.frame_layout.addWidget(self.already_button)
+        self.frame_layout.addWidget(self.register_button)
+
+        # Основной лейаут страницы
         layout = QVBoxLayout()
-
-        # Добавляем виджеты
-        layout.addWidget(self.title_label)
-        layout.addWidget(self.username_text)
-        layout.addWidget(self.password_text)
-        layout.addWidget(self.register_button)
-        layout.addWidget(self.error_label)
-
-        # Устанавливаем layout для текущего виджета
+        layout.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.main_frame)
         self.setLayout(layout)
 
     def handle_registration(self) -> None:
@@ -50,7 +123,9 @@ class RegistrationPage(Page):
         # Проверка данных для регистрации
         if username and password:
             print(f"Регистрация прошла успешно: {username}")
-            self.user_data = {"username": username, "password": password}
+            self.user_data = {"username": username,
+                              "password": password,
+                              "mc_dir": ""}
             save_user_data(
                 new_data=self.user_data,
                 directory=self.config_dir,

@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QApplication, QMainWindow, \
-    QStackedWidget, QLabel, QSlider
+    QStackedWidget, QLabel, QSlider, \
+    QFrame, QGraphicsDropShadowEffect
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtGui import QPainter, QPixmap, QColor
 from icecream import ic
 
 import os
@@ -16,7 +17,6 @@ class Launcher(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setupWindow()
-        self.initialize_variables()
         self.setupWidgets()
         self.check_user_status()
         self.check_download_status()
@@ -48,40 +48,6 @@ class Launcher(QMainWindow):
             painter.drawPixmap(0, 0, scaled_image)
         finally:
             painter.end()
-
-    def initialize_variables(self) -> None:
-        self.progress_label = QLabel("Progress:")
-        self.progress_slider = QSlider()
-
-        self.uuid_var = ""
-        self.token_var = ""
-
-        # Пути к JSON файлам
-        self.user_data_json = "user_data.json"
-
-        if platform.system() == "Windows":
-            self.config_dir = os.path.join(os.getenv("LOCALAPPDATA"),
-                                           "DGRMC_Launcher")
-        else:
-            self.config_dir = os.path.expanduser("~/.dgrmc_launcher")
-        os.makedirs(self.config_dir, exist_ok=True)
-        # Загружаем данные из JSON файлов, если они существуют
-        self.user_data = {}
-
-        if not os.path.exists(os.path.join(
-            self.config_dir,
-            self.user_data_json
-        )):
-            self.user_data = {}
-        else:
-            self.user_data = load_user_data(directory=self.config_dir,
-                                            json_file=self.user_data_json)
-
-        # Инициализация переменной mc_dir
-        self.mc_dir = self.user_data.get("mc_dir", "")
-
-        # Логирование для отладки
-        ic(self.user_data)
 
     def setupWidgets(self) -> None:
         # Создаем QStackedWidget для переключения между страницами

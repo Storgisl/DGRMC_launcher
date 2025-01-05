@@ -1,3 +1,7 @@
+import os
+import json 
+
+
 def save_user_data(new_data: dict, directory: str, json_file: str) -> None:
     user_data_file = os.path.join(directory, json_file)
 

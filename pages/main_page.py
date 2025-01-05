@@ -5,6 +5,7 @@ import shutil
 
 from PySide6.QtWidgets import QVBoxLayout, QPushButton, QLabel
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QColor
 from icecream import ic
 
 import minecraft_launcher_lib as mc_lib
