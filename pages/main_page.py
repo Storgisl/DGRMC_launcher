@@ -19,6 +19,8 @@ class MainPage(Page):
     def __init__(self):
         super().__init__()
 
+    def initUI(self):
+        super().initUI()
         layout = QVBoxLayout()
 
         # Кнопка для запуска Minecraft
@@ -26,6 +28,7 @@ class MainPage(Page):
         self.run_button.clicked.connect(self.run_mc)
         self.delete_button = QPushButton("Удалить Minecraft")
         self.delete_button.clicked.connect(self.delete_mc)
+        self.settings_button.show()
         layout.addWidget(self.run_button)
         layout.addWidget(self.delete_button)
         # Метка для отображения статуса
@@ -38,7 +41,7 @@ class MainPage(Page):
         """Метод для обновления статуса на UI"""
         self.status_label.setText(f"Статус: {status}")
 
-    def run_mc(self, mc_dir: str, options: dict = None) -> None:
+    def run_mc(self, mc_dir: str) -> None:
         def run_minecraft():
             version = "1.20.1"
             forge_version = mc_lib.forge.find_forge_version(version)

@@ -2,11 +2,10 @@ import sys
 import os
 
 from PySide6.QtWidgets import QLineEdit, QPushButton, QVBoxLayout, QLabel
-from PySide6.QtCore import Qt
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from manip_data.save_user_data import save_user_data
+from manip_data import save_user_data, load_user_data
 from .page import Page
 
 
@@ -15,6 +14,9 @@ class RegistrationPage(Page):
 
     def __init__(self):
         super().__init__()
+
+    def initUI(self):
+        super().initUI()
         self.username_text = QLineEdit()
         self.password_text = QLineEdit()
         # Кнопки
@@ -124,8 +126,8 @@ class RegistrationPage(Page):
         if username and password:
             print(f"Регистрация прошла успешно: {username}")
             self.user_data = {"username": username,
-                              "password": password,
-                              "mc_dir": ""}
+                              "password": password
+                             }
             save_user_data(
                 new_data=self.user_data,
                 directory=self.config_dir,
@@ -136,6 +138,12 @@ class RegistrationPage(Page):
             self.show_error("Заполните все поля.")
 
     def user_status(self) -> bool:
+        self.user_data = load_user_data(
+        directory=self.config_dir,
+        json_file=self.user_data_json
+        )
+        self.username_var = self.user_data.get("username", "")
+        self.password_var = self.user_data.get("password", "")
         if (self.username_var not in ("", None)
                 and self.password_var not in ("", None)):
             return True

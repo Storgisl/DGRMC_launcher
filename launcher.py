@@ -23,6 +23,9 @@ class Launcher(QMainWindow):
         self.background_image = QPixmap("assets/back.png")
         if not self.background_image or self.background_image.isNull():
             print("Ошибка: Изображение back.png не найдено или повреждено")
+        self.signals_setup()
+
+    def signals_setup(self):
         self.registration_page.registration_complete.connect(
             self.on_registration_complete
         )
@@ -31,6 +34,15 @@ class Launcher(QMainWindow):
         )
         self.main_page.delete_complete.connect(
             self.on_delete_complete
+        )
+        self.download_page.settings_clicked.connect(
+            self.on_settings_clicked
+        )
+        self.main_page.settings_clicked.connect(
+            self.on_settings_clicked
+        )
+        self.settings_page.go_back.connect(
+            self.on_go_back_clicked
         )
 
     def setupWindow(self) -> None:
@@ -70,8 +82,7 @@ class Launcher(QMainWindow):
         # Устанавливаем виджет как центральный
         self.setCentralWidget(self.stacked_widget)
 
-        # Переключаемся на страницу регистрации (по умолчанию)
-        self.stacked_widget.setCurrentWidget(self.registration_page)
+        self.stacked_widget.setCurrentWidget(self.main_page)
 
     #  user checker
     def check_user_status(self) -> None:
@@ -107,42 +118,43 @@ class Launcher(QMainWindow):
     def on_delete_complete(self):
         self.show_download_frame()
 
-    #  show registration frame
+    def on_settings_clicked(self):
+        ic("settings signal")
+        self.show_settings_frame()
+
+    def on_go_back_clicked(self):
+        self.check_download_status()
+
     def show_registration_frame(self):
         """Показать страницу регистрации"""
         self.clear_frames()
         self.stacked_widget.setCurrentWidget(self.registration_page)
         self.registration_page.show()
 
-    #  show login frame
     def show_login_frame(self):
         """Показать страницу регистрации"""
         self.clear_frames()
         self.stacked_widget.setCurrentWidget(self.login_page)
         self.login_page.show()
 
-    #  show settings frame
     def show_settings_frame(self):
         """Показать страницу регистрации"""
         self.clear_frames()
         self.stacked_widget.setCurrentWidget(self.settings_page)
         self.settings_page.show()
 
-    #  show download frame
     def show_download_frame(self):
         """Показать страницу загрузки"""
         self.clear_frames()
         self.stacked_widget.setCurrentWidget(self.download_page)
         self.download_page.show()
 
-    #  show main frame
     def show_main_frame(self):
         """Показать основную страницу"""
         self.clear_frames()
         self.stacked_widget.setCurrentWidget(self.main_page)
         self.main_page.show()
 
-    #  clear frames
     def clear_frames(self) -> None:
         self.registration_page.hide()
         self.download_page.hide()

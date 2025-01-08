@@ -24,13 +24,17 @@ class DownloadPage(Page):
     def __init__(self):
         super().__init__()
 
+
+    def initUI(self):
+        super().initUI()
         # Главный лейаут
         layout = QVBoxLayout()
 
-        # Кнопка выбора директории
         self.choose_dir_button = QPushButton("Choose Directory")
         self.choose_dir_button.clicked.connect(self.choose_directory)
         layout.addWidget(self.choose_dir_button)
+        self.settings_button.show()
+        layout.addWidget(self.settings_button)
 
         # Метка для отображения выбранной директории
         if self.mc_dir not in ("", None):
@@ -162,12 +166,15 @@ class DownloadPage(Page):
 
     def download_status(self) -> bool:
         dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
-        os.makedirs(dgrmc_dir, exist_ok=True)
 
         required_folders = ["assets", "libraries", "runtime", "versions"]
         if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
             ic(dgrmc_dir)
             return True
         else:
-            ic(f"Missing required folders in '{dgrmc_dir}'")
-            return False
+            if (dgrmc_dir is False and self.username_var not in ("", None) and
+                    self.password_var not in ("", None)):
+                return True
+            else:
+                ic(f"Missing required folders in '{self.username_var, self.password_var,dgrmc_dir}'")
+                return False
