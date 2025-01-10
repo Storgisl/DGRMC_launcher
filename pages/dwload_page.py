@@ -125,19 +125,17 @@ class DownloadPage(Page):
             }
 
             QProgressBar::chunk {
-                background-color: #50368a;
-                border-radius: 20px;
-                font-size: 14px;
+                background-color: rgba(203, 146, 229, 80);
+                color: #50368a;
+                border-radius: 10px;
             }
 
             QProgressBar::indicator {
                 background-color: #4CAF50;
-                font-size: 14px;
             }
 
             QProgressBar::text {
                 color: #d4c0d0;
-                font-size: 14px;
                 text-align: center;
                 padding: 0px;
             }
