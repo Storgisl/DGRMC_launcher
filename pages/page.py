@@ -66,18 +66,9 @@ class Page(QWidget):
 
         self.main_frame.setFixedSize(400, 500)
 
-        # Создаем эффект тени
-        self.shadow_effect = QGraphicsDropShadowEffect()
-        self.shadow_effect.setBlurRadius(1)  # Радиус размытия тени
-        self.shadow_effect.setColor(QColor("#6D0088"))  # Цвет тени
-        self.shadow_effect.setOffset(0, 0)  # Смещение тени
-
-        # Применяем эффект к фрейму
-        self.main_frame.setGraphicsEffect(self.shadow_effect)
-
         # Лейаут для фрейма
         self.frame_layout = QVBoxLayout(self.main_frame)
-        self.frame_layout.setSpacing(15)
+        self.frame_layout.setSpacing(5)
 
         # Общие кнопки
         self.settings_button = QPushButton('', self)

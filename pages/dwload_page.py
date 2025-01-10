@@ -7,7 +7,7 @@ import minecraft_launcher_lib as mc_lib
 
 from PySide6.QtWidgets import QVBoxLayout, QPushButton, QFileDialog, QLabel, \
     QProgressBar
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, Qt
 from icecream import ic
 
 from .page import Page
@@ -27,36 +27,137 @@ class DownloadPage(Page):
 
     def initUI(self):
         super().initUI()
-        # Главный лейаут
-        layout = QVBoxLayout()
 
-        self.choose_dir_button = QPushButton("Choose Directory")
+        self.title_label = QLabel("INSTALLATION")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
+            QLabel {
+                font-size: 55px;
+                color: #cb92e5;
+                margin-bottom: -15px;
+            }
+        """)
+
+        self.title_label.setFont(self.custom_font_label)
+        self.choose_dir_button = QPushButton("CHOOSE DIRECTORY")
+        self.choose_dir_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(0, 0, 0, 0);
+                color: #d4c0d0;
+                font-weight: bold;
+                font-size: 24px;
+                border: 2px solid #d4c0d0;
+                border-radius: 20px;
+                margin-top: 20px;
+                min-width: 280px;
+                max-width: 400px;
+                min-height: 40px;
+                max-height: 100px;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+                border: 2px solid #e2a1ff;
+            }
+        """)
+        self.choose_dir_button.setFont(self.custom_font_button)
         self.choose_dir_button.clicked.connect(self.choose_directory)
-        layout.addWidget(self.choose_dir_button)
-        self.settings_button.show()
-        layout.addWidget(self.settings_button)
 
         # Метка для отображения выбранной директории
         if self.mc_dir not in ("", None):
             self.directory_label = QLabel(self.mc_dir)
         else:
-            self.directory_label = QLabel("Directory not choosen")
-        layout.addWidget(self.directory_label)
+            self.directory_label = QLabel("DIRECTORY NOT CHOOSEN")
+        self.directory_label.setFont(self.custom_font_button)
+        self.directory_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                color: #ff0000;
+            }
+        """)
 
         self.set_status_signal.connect(self.set_status)
         self.set_progress_signal.connect(self.set_progress)
         self.set_max_signal.connect(self.set_max)
 
-        self.install_mc_button = QPushButton("Install Minecraft")
+        self.install_mc_button = QPushButton("INSTALL MINECRAFT")
+        self.install_mc_button.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(0, 0, 0, 0);
+                color: #d4c0d0;
+                font-weight: bold;
+                font-size: 24px;
+                border: 2px solid #d4c0d0;
+                border-radius: 20px;
+                margin-top: 20px;
+                min-width: 280px;
+                max-width: 400px;
+                min-height: 40px;
+                max-height: 100px;
+            }
+            QPushButton:hover {
+                color: #e2a1ff;
+                border: 2px solid #e2a1ff;
+            }
+        """)
+        self.install_mc_button.setFont(self.custom_font_button)
         self.install_mc_button.clicked.connect(lambda: self.install_mc(
             mc_dir=self.mc_dir))
-        layout.addWidget(self.install_mc_button)
 
         self.progress_label = QLabel("Status: Waiting")
-        self.progress_bar = QProgressBar()
-        layout.addWidget(self.progress_label)
-        layout.addWidget(self.progress_bar)
+        self.progress_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                color: #cb92e5;
+                margin-bottom: -15px;
+            }
+        """)
+        self.progress_label.setFont(self.custom_font_button)
 
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: rgba(0, 0, 0, 0);
+                border-radius: 20px;
+                border: 2px solid #cb92e5;
+                height: 40px;
+                width: 280px;
+                font-size: 20px;
+            }
+
+            QProgressBar::chunk {
+                background-color: #50368a;
+                border-radius: 20px;
+                font-size: 14px;
+            }
+
+            QProgressBar::indicator {
+                background-color: #4CAF50;
+                font-size: 14px;
+            }
+
+            QProgressBar::text {
+                color: #d4c0d0;
+                font-size: 14px;
+                text-align: center;
+                padding: 0px;
+            }
+        """)
+
+        # Центрируем и устанавливаем нужный шрифт
+        self.progress_bar.setAlignment(Qt.AlignCenter)
+        self.progress_bar.setFont(self.custom_font_button)
+
+        self.frame_layout.addWidget(self.title_label, alignment=Qt.AlignTop)
+        self.frame_layout.addWidget(self.choose_dir_button, alignment=Qt.AlignCenter)
+        self.frame_layout.addWidget(self.directory_label, alignment=Qt.AlignCenter)
+        self.frame_layout.addWidget(self.install_mc_button, alignment=Qt.AlignCenter)
+        self.frame_layout.addWidget(self.progress_label, alignment=Qt.AlignCenter)
+        self.frame_layout.addWidget(self.progress_bar, alignment=Qt.AlignCenter)
+
+        # Основной лейаут страницы
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.main_frame)
         self.setLayout(layout)
 
     def choose_directory(self) -> None:
@@ -64,6 +165,27 @@ class DownloadPage(Page):
                                                   "Choose Minecraft Directory")
         if mc_dir:
             self.directory_label.setText(mc_dir)
+            self.directory_label.setStyleSheet("""
+                QLabel {
+                    font-size: 18px;
+                    color: #d4c0d0;
+                }
+            """)
+            self.choose_dir_button.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(0, 0, 0, 0);
+                    color: #e2a1ff;
+                    font-weight: bold;
+                    font-size: 24px;
+                    border: 2px solid #e2a1ff;
+                    border-radius: 20px;
+                    margin-top: 20px;
+                    min-width: 280px;
+                    max-width: 400px;
+                    min-height: 40px;
+                    max-height: 100px;
+                }
+            """)
             self.mc_dir = mc_dir
             print(f"Selected directory: {mc_dir}")
             save_user_data(
@@ -141,7 +263,7 @@ class DownloadPage(Page):
 
     def set_status(self, status: str):
         """Метод для обновления статуса (вызывается через сигнал)"""
-        self.progress_label.setText(f"Status: {status}")
+        self.progress_label.setText(f"Status: \n {status}")
 
     def set_progress(self, progress: int):
         """Метод для обновления прогресса (вызывается через сигнал)"""
