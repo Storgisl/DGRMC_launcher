@@ -37,8 +37,8 @@ class DownloadPage(Page):
                 margin-bottom: -15px;
             }
         """)
-
         self.title_label.setFont(self.custom_font_label)
+        
         self.choose_dir_button = QPushButton("CHOOSE DIRECTORY")
         self.choose_dir_button.setStyleSheet("""
             QPushButton {

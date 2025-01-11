@@ -63,12 +63,27 @@ class Page(QWidget):
                 height: 768px;
             }
         """)
-
         self.main_frame.setFixedSize(400, 500)
 
-        # Лейаут для фрейма
+        # Фрейм для главной и настроек
+        self.glavnaya = QFrame()
+        self.glavnaya.setFrameShape(QFrame.StyledPanel)
+        self.glavnaya.setFrameShadow(QFrame.Raised)
+        self.glavnaya.setStyleSheet("""
+            QFrame {
+                background-color: #342F2F;
+                border-radius: 50px;
+                padding: 10px;
+                height: 768px;
+            }
+        """)
+        self.glavnaya.setFixedSize(600, 600)
+
+        # Лейауты
         self.frame_layout = QVBoxLayout(self.main_frame)
         self.frame_layout.setSpacing(5)
+        self.glavnaya_layout = QVBoxLayout(self.glavnaya)
+        self.glavnaya_layout.setSpacing(5)
 
         # Общие кнопки
         self.settings_button = QPushButton('', self)
@@ -81,14 +96,6 @@ class Page(QWidget):
             QPushButton {
                 border: 2xp solid black;
                 background: none;
-                border-radius: 30px;
-            }
-            QPushButton:hover {
-                background: rgba(200, 200, 200, 0.2);  /* Optional: Add hover effect */
-                background-color: #d0d0d0;
-            }
-            QPushButton:pressed {
-                background-color: #aaaaaa;
             }
         """)
         self.settings_button.clicked.connect(self.emit_signal)
