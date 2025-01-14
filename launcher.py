@@ -32,9 +32,9 @@ class Launcher(QMainWindow):
         self.download_page.download_complete.connect(
             self.on_download_complete
         )
-        self.main_page.delete_complete.connect(
-            self.on_delete_complete
-        )
+        # self.main_page.delete_complete.connect(
+        #     self.on_delete_complete
+        # )
         self.download_page.settings_clicked.connect(
             self.on_settings_clicked
         )
@@ -43,6 +43,9 @@ class Launcher(QMainWindow):
         )
         self.settings_page.go_back.connect(
             self.on_go_back_clicked
+        )
+        self.settings_page.delete_complete.connect(
+            self.on_delete_complete
         )
 
     def setupWindow(self) -> None:
