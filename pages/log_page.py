@@ -1,9 +1,8 @@
 import sys
 import os
 
-from PySide6.QtWidgets import QLineEdit, QPushButton, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QLineEdit, QPushButton, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from manip_data import save_user_data, load_user_data

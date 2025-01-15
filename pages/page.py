@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QFrame, \
     QPushButton
 from PySide6.QtGui import QFontDatabase, QFont, QColor, \
     QIcon
-from PySide6.QtCore import QSize, Signal
+from PySide6.QtCore import QSize, Signal, QPropertyAnimation, QEasingCurve
 from icecream import ic
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -73,7 +73,7 @@ class Page(QWidget):
             QFrame {
                 background-color: #342F2F;
                 border-radius: 50px;
-                padding: 10px;
+                padding: 0px;
                 height: 768px;
             }
         """)
@@ -81,25 +81,45 @@ class Page(QWidget):
 
         # Лейауты
         self.frame_layout = QVBoxLayout(self.main_frame)
-        self.frame_layout.setSpacing(5)
+        self.frame_layout.setSpacing(0)
         self.glavnaya_layout = QVBoxLayout(self.glavnaya)
-        self.glavnaya_layout.setSpacing(5)
+        self.glavnaya_layout.setSpacing(0)
 
         # Общие кнопки
         self.settings_button = QPushButton('', self)
-        self.settings_button.setIcon(QIcon('assets/settings_icon.png'))
-        self.settings_button.setIconSize(self.settings_button.sizeHint())
-        self.settings_button.setIconSize(QSize(32, 32))
-        self.settings_button.setFixedSize(40, 40)
-        self.settings_button.setGeometry(200, 150, 100, 100)
-        self.settings_button.setStyleSheet("""
-            QPushButton {
-                border: 2xp solid black;
-                background: none;
-            }
-        """)
+        self.settings_button.setIcon(QIcon('assets/settings.svg'))
+        self.settings_button.setIconSize(QSize(48, 48))
+        self.settings_button.setFixedSize(80, 80)
+        self.settings_button.setStyleSheet("border: none;")
+        self.settings_button.setGeometry(150, 150, 80, 80)
+
+        # Сигналы для обработки событий
+        self.settings_button.enterEvent = self.on_hover
+        self.settings_button.leaveEvent = self.on_leave
+
+        # Анимация
+        self.animation = QPropertyAnimation(self.settings_button, b"iconSize")
+        self.animation.setDuration(400)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuad)  # Плавность анимации
+
         self.settings_button.clicked.connect(self.emit_signal)
         self.settings_button.hide()
+
+    def on_hover(self, event):
+        """Меняем иконку при наведении."""
+        self.settings_button.setIcon(QIcon('assets/settings_hover.svg'))
+        self.animation.stop()
+        self.animation.setStartValue(self.settings_button.iconSize())
+        self.animation.setEndValue(QSize(64, 64))
+        self.animation.start()
+
+    def on_leave(self, event):
+        """Возвращаем стандартную иконку."""
+        self.settings_button.setIcon(QIcon('assets/settings.svg'))
+        self.animation.stop()
+        self.animation.setStartValue(self.settings_button.iconSize())
+        self.animation.setEndValue(QSize(48, 48))
+        self.animation.start()
 
     def emit_signal(self):
         ic("settings button clicked")

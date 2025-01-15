@@ -1,10 +1,13 @@
 import shutil
+import psutil
 import os
 
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QSpinBox, QLabel, QPushButton, QWidget
+    QVBoxLayout, QSlider, QLabel, QPushButton
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QFontDatabase, QFont, QColor, \
+    QIcon
+from PySide6.QtCore import Qt, QSize, Signal, QPropertyAnimation, QEasingCurve
 from icecream import ic
 
 from .page import Page
@@ -24,64 +27,92 @@ class SettingsPage(Page):
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
+                background-color: rgba(0, 0, 0, 0);
                 font-size: 55px;
                 color: #cb92e5;
+                padding: 0;
+                margin: 0;
+                text-align: center;
+                vertical-align: middle;
+                margin-top: -20px;
             }
         """)
 
-        self.go_back_button = QPushButton("BACK")
+        self.go_back_button = QPushButton("") #background-color: rgba(0, 0, 0, 0);
+        self.go_back_button.setIcon(QIcon('assets/back.svg'))
+        self.settings_button.setIconSize(QSize(48, 48))
+        self.settings_button.setFixedSize(80, 80)
+        self.settings_button.setStyleSheet("border: none;")
+        self.settings_button.setGeometry(150, 150, 200, 200)
         self.go_back_button.setStyleSheet("""
             QPushButton {
-                background-color: rgba(0, 0, 0, 0);
-                color: #cb92e5;
-                font-weight: bold;
-                border: 2px solid #cb92e5;
-                border-radius: 20px;
-                font-size: 24px;
-                min-height: 40px; 
-                max-height: 100px;
-                min-width: 100px;
-                max-width: 600px;
-            }
-            QPushButton:hover {
-                color: #e2a1ff;
-                border: 2px solid #e2a1ff;
+                background-color: red;
             }
         """)
         self.go_back_button.clicked.connect(self.emit_signal)
 
-        # Minimum RAM spin box
-        self.min_label = QLabel("Minimum RAM (MiB):")
+        # Получение максимального объёма оперативной памяти
+        self.max_ram = self.get_max_system_ram()
+        self.min_label = QLabel("RAM (MiB):")
         self.min_label.setStyleSheet("""
             QLabel {
                 font-size: 20px;
+                background-color: red;
                 color: #cb92e5;
+                padding: 0;
             }
         """)
 
-        self.min_spinbox = QSpinBox()
-        self.min_spinbox.setMinimum(512)
-        self.min_spinbox.setMaximum(32768)
-        self.min_spinbox.setValue(512)
-        self.min_spinbox.setSingleStep(128)
+        # Слайдер для выбора минимальной оперативной памяти
+        self.min_slider = QSlider(Qt.Horizontal)
+        self.min_slider.setMinimum(2048)
+        self.min_slider.setMaximum(self.max_ram)
+        self.min_slider.setValue(2048)
+        self.min_slider.setSingleStep(512)
+        self.min_slider.setStyleSheet("""
+            QSlider {
+                height: 12px;
+                width: 520px;
+                background: #333333;
+                border-radius: 5px;
+            }
+            QSlider::handle:horizontal {
+                background: #cb92e5;
+                border: 2px solid #8f4e96;
+                width: 20px;
+                height: 20px;
+                border-radius: 5px;
+                margin-top: -4px; /* Позиционирование ручки */
+                margin-bottom: -4px;
+                margin-left: -40px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #e2a1ff;
+            }
+            QSlider::add-page:horizontal {
+                background: #e2a1ff;
+                border-radius: 5px;
+            }
+            QSlider::sub-page:horizontal {
+                background: #8f4e96;
+                border-radius: 5px;
+            }
+        """)
 
-        # Maximum RAM spin box
-        self.max_label = QLabel("Maximum RAM (MiB):")
-        self.max_label.setStyleSheet("""
+        # Метка для отображения текущего значения
+        self.value_label = QLabel(f"Selected: {self.min_slider.value()} MiB")
+        self.value_label.setStyleSheet("""
             QLabel {
-                font-size: 20px;
-                color: #cb92e5;
+                font-size: 18px;
+                color: #e2a1ff;
             }
         """)
 
-        self.max_spinbox = QSpinBox()
-        self.max_spinbox.setMinimum(512)
-        self.max_spinbox.setMaximum(32768)
-        self.max_spinbox.setValue(2048)
-        self.max_spinbox.setSingleStep(128)
+        # Подключение изменения значения слайдера к обновлению метки
+        self.min_slider.valueChanged.connect(self.update_value)
 
         # Button to display JVM arguments
-        self.generate_button = QPushButton("Generate JVM Arguments (Save)")
+        self.generate_button = QPushButton("Save")
         self.generate_button.setStyleSheet("""
             QPushButton {
                 background-color: rgba(0, 0, 0, 0);
@@ -107,9 +138,9 @@ class SettingsPage(Page):
         self.change_profile_button.setStyleSheet("""
             QPushButton {
                 background-color: rgba(0, 0, 0, 0);
-                color: #cb92e5;
+                color: #D4C0D0;
                 font-weight: bold;
-                border: 2px solid #cb92e5;
+                border: 2px solid #D4C0D0;
                 border-radius: 20px;
                 font-size: 24px;
                 min-height: 40px; 
@@ -128,9 +159,9 @@ class SettingsPage(Page):
         self.check_updates_button.setStyleSheet("""
             QPushButton {
                 background-color: rgba(0, 0, 0, 0);
-                color: #cb92e5;
+                color: #D4C0D0;
                 font-weight: bold;
-                border: 2px solid #cb92e5;
+                border: 2px solid #D4C0D0;
                 border-radius: 20px;
                 font-size: 24px;
                 min-height: 40px; 
@@ -149,9 +180,9 @@ class SettingsPage(Page):
         self.delete_button.setStyleSheet("""
             QPushButton {
                 background-color: rgba(0, 0, 0, 0);
-                color: #cb92e5;
+                color: #D4C0D0;
                 font-weight: bold;
-                border: 2px solid #cb92e5;
+                border: 2px solid #D4C0D0;
                 border-radius: 20px;
                 font-size: 24px;
                 min-height: 40px; 
@@ -166,37 +197,26 @@ class SettingsPage(Page):
         """)
         self.delete_button.clicked.connect(self.delete_mc)
 
-        # Label to show generated JVM arguments
-        self.output_label = QLabel("")
-        self.output_label.setStyleSheet("""
-            QLabel {
-                font-size: 20px;
-                color: #cb92e5;
-            }
-        """)
-        self.output_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.output_label.setWordWrap(True)
-
         self.go_back_button.setFont(self.custom_font_label)
         self.title_label.setFont(self.custom_font_label)
         self.change_profile_button.setFont(self.custom_font_label)
         self.check_updates_button.setFont(self.custom_font_label)
         self.delete_button.setFont(self.custom_font_label)
-        self.output_label.setFont(self.custom_font_label)
         self.generate_button.setFont(self.custom_font_label)
+        self.min_label.setFont(self.custom_font_label)
+        self.min_slider.setFont(self.custom_font_label)
+        self.value_label.setFont(self.custom_font_label)
 
         # Add widgets to layout
-        self.glavnaya_layout.addWidget(self.go_back_button, alignment=Qt.AlignRight)
+        self.glavnaya_layout.addWidget(self.go_back_button, alignment=Qt.AlignLeft)
         self.glavnaya_layout.addWidget(self.title_label, alignment=Qt.AlignTop)
-        self.glavnaya_layout.addWidget(self.min_label, alignment=Qt.AlignCenter)
-        self.glavnaya_layout.addWidget(self.min_spinbox, alignment=Qt.AlignCenter)
-        self.glavnaya_layout.addWidget(self.max_label, alignment=Qt.AlignCenter)
-        self.glavnaya_layout.addWidget(self.max_spinbox, alignment=Qt.AlignCenter)
+        self.glavnaya_layout.addWidget(self.min_label, alignment=Qt.AlignLeft)
+        self.glavnaya_layout.addWidget(self.min_slider, alignment=Qt.AlignCenter)
+        self.glavnaya_layout.addWidget(self.value_label, alignment=Qt.AlignCenter)
         self.glavnaya_layout.addWidget(self.change_profile_button, alignment=Qt.AlignCenter)
         self.glavnaya_layout.addWidget(self.check_updates_button, alignment=Qt.AlignCenter)
         self.glavnaya_layout.addWidget(self.delete_button, alignment=Qt.AlignCenter)
-        self.glavnaya_layout.addWidget(self.generate_button, alignment=Qt.AlignCenter)
-        self.glavnaya_layout.addWidget(self.output_label, alignment=Qt.AlignCenter)
+        self.glavnaya_layout.addWidget(self.generate_button, alignment=Qt.AlignBottom)
 
         # Основной лейаут страницы
         layout = QVBoxLayout()
@@ -204,19 +224,29 @@ class SettingsPage(Page):
         layout.addWidget(self.glavnaya)
         self.setLayout(layout)
 
+    def update_value(self, value):
+        """Обновление метки с текущим значением."""
+        max_ram = self.get_max_system_ram()
+        self.value_label.setText(f"Selected: {value}/{max_ram} MiB")
+
+    def get_max_system_ram(self):
+        """Возвращает общий объём оперативной памяти в MiB."""
+        total_ram = psutil.virtual_memory().total  # Получение общей памяти в байтах
+        return total_ram // (1024 * 1024)  # Конвертация в Mi
+
     def emit_signal(self):
         ic("settings button clicked")
         self.go_back.emit()
 
     def generate_jvm_arguments(self):
-        min_ram = self.min_spinbox.value()
-        max_ram = self.max_spinbox.value()
-
-        if min_ram > max_ram:
-            self.output_label.setText("Error: Minimum RAM cannot be greater than Maximum RAM.")
-        else:
-            jvm_args = f"-Xms{min_ram}M -Xmx{max_ram}M"
-            self.output_label.setText(f"JVM Arguments: {jvm_args}")
+        min_ram = self.min_slider.value()
+        max_ram = self.max_ram
+        pass
+        # if min_ram > max_ram:
+        #     self.output_label.setText("Error: Minimum RAM cannot be greater than Maximum RAM.")
+        # else:
+        #     jvm_args = f"-Xms{min_ram}M -Xmx{max_ram}M"
+        #     self.output_label.setText(f"JVM Arguments: {jvm_args}")
 
     def delete_mc(self):
             try:

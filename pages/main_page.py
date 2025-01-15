@@ -3,8 +3,7 @@ import subprocess
 import threading
 
 from PySide6.QtWidgets import QVBoxLayout, QPushButton, QLabel
-from PySide6.QtCore import Signal
-from PySide6.QtGui import QColor, Qt
+from PySide6.QtGui import Qt
 from icecream import ic
 
 import minecraft_launcher_lib as mc_lib
@@ -21,24 +20,26 @@ class MainPage(Page):
 
         # Кнопошка настроек
         self.settings_button.show()
-        #self.settings_button.setStyleSheet()
-        #self.run_button.clicked.connect()
 
         # ник надо вытащить из джсона
         nickname = "{username}"
-        self.title_label = QLabel(f"WELCOME \n {nickname}")
+        #self.title_label = QLabel(f"WELCOME \n {nickname}")
+        self.title_label = QLabel(f"WELCOME \n Kivaari")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("""
             QLabel {
                 font-size: 70px;
                 color: #cb92e5;
-                margin-top: 80px;
+                margin-top: 70px;
+                padding: 0;      /* Убираем внутренние отступы */
+                text-align: center;  /* Выравнивание текста по горизонтали */
+                vertical-align: middle;  /* Выравнивание текста по вертикали */
             }
         """)
         self.title_label.setFont(self.custom_font_label)
 
         # Кнопка для запуска Minecraft
-        self.run_button = QPushButton("PLAY")
+        self.run_button = QPushButton("PLAY", self)
         self.run_button.setStyleSheet("""
             QPushButton {
                 background-color: rgba(0, 0, 0, 0);
@@ -55,7 +56,8 @@ class MainPage(Page):
             }
             QPushButton:hover {
                 color: #e2a1ff;
-                border: 2px solid #e2a1ff;
+                border: 3px solid #e2a1ff;
+                font-size: 55px;
             }
         """)
         self.run_button.setFont(self.custom_font_button)
@@ -76,8 +78,6 @@ class MainPage(Page):
         self.glavnaya_layout.addWidget(self.settings_button, alignment=Qt.AlignRight)
         self.glavnaya_layout.addWidget(self.title_label, alignment=Qt.AlignTop)
         self.glavnaya_layout.addWidget(self.run_button, alignment=Qt.AlignCenter)
-        # статус скрыл
-        #self.glavnaya_layout.addWidget(self.status_label, alignment=Qt.AlignBottom)
 
         # Основной лейаут страницы
         layout = QVBoxLayout()
