@@ -29,12 +29,15 @@ class Launcher(QMainWindow):
         self.registration_page.registration_complete.connect(
             self.on_registration_complete
         )
+        self.registration_page.already_registered.connect(
+            self.on_already_registered
+        )
+        self.login_page.no_acc.connect(
+            self.on_no_acc
+        )
         self.download_page.download_complete.connect(
             self.on_download_complete
         )
-        # self.main_page.delete_complete.connect(
-        #     self.on_delete_complete
-        # )
         self.download_page.settings_clicked.connect(
             self.on_settings_clicked
         )
@@ -65,10 +68,8 @@ class Launcher(QMainWindow):
             painter.end()
 
     def setupWidgets(self) -> None:
-        # Создаем QStackedWidget для переключения между страницами
         self.stacked_widget = QStackedWidget()
 
-        # Создаем страницы и добавляем их в stacked_widget
         self.registration_page = RegistrationPage()
         self.login_page = LoginPage()
         self.download_page = DownloadPage()
@@ -82,7 +83,6 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.main_page)
         self.stacked_widget.addWidget(self.settings_page)
 
-        # Устанавливаем виджет как центральный
         self.setCentralWidget(self.stacked_widget)
 
         self.stacked_widget.setCurrentWidget(self.main_page)
@@ -96,7 +96,6 @@ class Launcher(QMainWindow):
                 self.show_registration_frame()
 
         except Exception as e:
-            # Обработка ошибок
             print(f"Error: {e}")
             self.show_registration_frame()
 
@@ -114,6 +113,12 @@ class Launcher(QMainWindow):
 
     def on_registration_complete(self):
         self.show_download_frame()
+
+    def on_already_registered(self):
+        self.show_login_frame()
+
+    def on_no_acc(self) -> None:
+        self.show_registration_frame()
 
     def on_download_complete(self):
         self.show_main_frame()

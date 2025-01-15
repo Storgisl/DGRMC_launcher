@@ -12,6 +12,7 @@ from .page import Page
 
 class RegistrationPage(Page):
     registration_complete = Signal()
+    already_registered = Signal()
 
     def __init__(self):
         super().__init__()
@@ -26,14 +27,6 @@ class RegistrationPage(Page):
         self.register_button.clicked.connect(self.handle_registration)
 
         # Заголовок
-        self.title_label = QLabel("REGISTRATION")
-        self.title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
-
-        # Установим стиль для кнопки "ENTER"
-        self.register_button.setStyleSheet("background-color: #4CAF50; \
-        color: white; \
-        font-weight: bold;")
-
         self.title_label = QLabel("REGISTRATION")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("""
@@ -125,9 +118,8 @@ class RegistrationPage(Page):
                 color: #e2a1ff;
             }
         """)
-        
         self.already_button.setFont(self.custom_font_button)
-        #self.already_button.clicked.connect(self.handle_already)
+        self.already_button.clicked.connect(self.handle_already)
 
         # Кнопка регистрации
         self.register_button = QPushButton("ENTER")
@@ -150,14 +142,6 @@ class RegistrationPage(Page):
         """)
         self.register_button.setFont(self.custom_font_button)
         self.register_button.clicked.connect(self.handle_registration)
-
-        # Функция для добавления тени
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)
-        shadow.setColor(QColor(0, 0, 0, 80))
-        shadow.setOffset(2, 2)
-        self.title_label.setGraphicsEffect(shadow)
-        self.register_button.setGraphicsEffect(shadow)
 
         self.username_text.setAlignment(Qt.AlignCenter)
         self.password_text.setAlignment(Qt.AlignCenter)
@@ -217,3 +201,6 @@ class RegistrationPage(Page):
             self.layout().addWidget(self.error_label)
 
         self.error_label.setText(message)
+
+    def handle_already(self) -> None:
+        self.already_registered.emit()
