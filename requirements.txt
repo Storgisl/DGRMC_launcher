@@ -1,0 +1,4 @@
+icecream
+minecraft-launcher-lib
+psutil
+PySide6
