@@ -5,15 +5,9 @@ from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtCore import Qt
 from icecream import ic
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pages.HomePage import HomePage
-from pages.RegistrationPage import RegistrationPage
-from pages.LoginPage import LoginPage
-from pages.MainPage import MainPage
-from pages.DownloadPage import DownloadPage
-from pages.InstallPage import InstallPage
-from pages.AccountPage import AccountPage
-from pages.LauncherSettings import LauncherSettings
-from pages.GameSettings import GameSettings
+from pages import RegistrationPage, LauncherSettings, HomePage, GameSettings, \
+    MainPage, AccountPage, LoginPage, DownloadPage, InstallPage
+
 
 class Launcher(QMainWindow):
     def __init__(self):
@@ -26,7 +20,7 @@ class Launcher(QMainWindow):
         if not self.background_image or self.background_image.isNull():
             print("Ошибка: Изображение back.png не найдено или повреждено")
         self.signals_setup()
-    
+
     def signals_setup(self):
         self.home_page.go_to_account.connect(
             self.show_account_page
@@ -101,10 +95,10 @@ class Launcher(QMainWindow):
         self.install_page = InstallPage(self.stacked_widget)
         self.launcher_settings_page = LauncherSettings(self.stacked_widget)
         self.game_settings_page = GameSettings(self.stacked_widget)
-        
+
         ic(self.registration_page.user_status())
         ic(self.download_page.download_status())
-        
+
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.registration_page)
         self.stacked_widget.addWidget(self.login_page)
@@ -114,7 +108,7 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.install_page)
         self.stacked_widget.addWidget(self.launcher_settings_page)
         self.stacked_widget.addWidget(self.game_settings_page)
-        
+
         self.setCentralWidget(self.stacked_widget)
         self.stacked_widget.setCurrentWidget(self.home_page)
 
@@ -141,43 +135,43 @@ class Launcher(QMainWindow):
             print(f"Error: {e}")
 
     def show_registration_page(self):
-        print("reg")
+        ic("reg")
         self.stacked_widget.setCurrentWidget(self.registration_page)
 
     def show_download_page(self):
-        print("download")
+        ic("download")
         self.stacked_widget.setCurrentWidget(self.download_page)
 
     def show_home_page(self) -> None:
-        print("home")
+        ic("home")
         self.stacked_widget.setCurrentWidget(self.home_page)
-    
+
     def show_account_page(self):
-        print("acc")
+        ic("acc")
         self.stacked_widget.setCurrentWidget(self.account_page)
-    
+
     def show_login_page(self):
-        print("login")
+        ic("login")
         self.stacked_widget.setCurrentWidget(self.login_page)
 
     def show_main_page(self):
-        print("main")
+        ic("main")
         self.stacked_widget.setCurrentWidget(self.main_page)
-    
+
     def show_install_page(self):
-        print("install")
+        ic("install")
         self.stacked_widget.setCurrentWidget(self.install_page)
-    
+
     def show_launcher_settings_page(self):
-        print("laun settings")
+        ic("launcher settings")
         self.stacked_widget.setCurrentWidget(self.launcher_settings_page)
-    
+
     def show_game_settings_page(self):
-        print("game settings")
+        ic("game settings")
         self.stacked_widget.setCurrentWidget(self.game_settings_page)
-    
+
     def clear_frames(self) -> None:
-        print("clear")
+        ic("clear")
         self.home_page.hide()
         self.registration_page.hide()
         self.login_page.hide()

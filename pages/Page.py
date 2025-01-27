@@ -91,7 +91,7 @@ class Page(QWidget):
         """)
         self.made_by_label.setFont(self.extra_light_font)
         self.footer_layout.addWidget(self.made_by_label, alignment=Qt.AlignCenter)
-    
+
     def emit_signal(self):
         ic("settings button clicked")
         self.settings_clicked.emit()
