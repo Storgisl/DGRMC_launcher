@@ -1,7 +1,9 @@
 from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
+
 from .Page import Page
+
 
 class HomePage(Page):
     go_to_account = Signal()
@@ -15,25 +17,21 @@ class HomePage(Page):
         # Центральная часть страницы
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)  # Центрируем элементы
-
         main_image_label = QLabel(self)
         main_image_pixmap = QPixmap("assets/Main.png")
         main_image_label.setPixmap(main_image_pixmap)
         main_layout.addWidget(main_image_label, alignment=Qt.AlignCenter)
-
         top_spacer = QSpacerItem(5, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
         main_layout.addItem(top_spacer)
-
         text_image_label = QLabel(self)
         text_image_pixmap = QPixmap("assets/Text.png")
         text_image_label.setPixmap(text_image_pixmap)
         main_layout.addWidget(text_image_label, alignment=Qt.AlignCenter)
-
         top_spacer = QSpacerItem(5, 30, QSizePolicy.Minimum, QSizePolicy.Fixed)
         main_layout.addItem(top_spacer)
-
         start_button = QPushButton("Start Journey", self)
-        start_button.setStyleSheet("""
+        start_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #412483;
                 color: #F0F0F0;
@@ -47,12 +45,12 @@ class HomePage(Page):
             QPushButton:hover {
                 background-color: #7247CB;
             }
-        """)
+        """
+        )
         start_button.setFont(self.bold_font)
         start_button.setCursor(Qt.PointingHandCursor)
         start_button.clicked.connect(self.go_to_account_page)
         main_layout.addWidget(start_button, alignment=Qt.AlignCenter)
-
         layout = QVBoxLayout()
         layout.addSpacing(20)
         layout.addWidget(self.navbar_frame)

@@ -1,14 +1,21 @@
 import sys
 import os
 
-from PySide6.QtWidgets import QVBoxLayout, QPushButton, QFileDialog, QLabel, QVBoxLayout, QFrame, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import (
+    QVBoxLayout,
+    QPushButton,
+    QFileDialog,
+    QLabel,
+    QVBoxLayout,
+    QFrame,
+    QSpacerItem,
+    QSizePolicy,
+)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Signal, Qt
 from icecream import ic
 
 from .Page import Page
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from manip_data.save_user_data import save_user_data
 
 
 class DownloadPage(Page):
@@ -24,42 +31,51 @@ class DownloadPage(Page):
         # Центральная часть страницы
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)
-        
+
         # Фрейм с размером 427x418
         frame = QFrame(self)
         frame.setFixedSize(427, 418)
-        frame.setStyleSheet("""
+        frame.setStyleSheet(
+            """
             QFrame {
                 background-color: #412483;
                 border-radius: 10px;
             }
-        """)
+        """
+        )
         frame_layout = QVBoxLayout()
-        frame_layout.setAlignment(Qt.AlignTop)  # Выравниваем элементы по верхней части фрейма
+        frame_layout.setAlignment(
+            Qt.AlignTop
+        )  # Выравниваем элементы по верхней части фрейма
         frame_layout.setSpacing(10)  # Устанавливаем меньший отступ между элементами
-        
+
         # Картинка
         text_image_label = QLabel(self)
         text_image_pixmap = QPixmap("assets/Text.png")
         text_image_label.setPixmap(text_image_pixmap)
-        frame_layout.addWidget(text_image_label, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        
+        frame_layout.addWidget(
+            text_image_label, alignment=Qt.AlignTop | Qt.AlignHCenter
+        )
+
         # Добавляем небольшой отступ между картинкой и надписью
         top_spacer = QSpacerItem(0, 110, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
-        
+
         label = QLabel("Please, choose installation folder", self)
-        label.setStyleSheet("""
+        label.setStyleSheet(
+            """
             QLabel {
                 font-size: 14px;
                 color: #7247CB;
             }
-        """)
+        """
+        )
         label.setFont(self.light_font)
         frame_layout.addWidget(label, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        
+
         choose_dir_button = QPushButton("Choose", self)
-        choose_dir_button.setStyleSheet("""
+        choose_dir_button.setStyleSheet(
+            """
             QPushButton {
                 background-color: #503684;
                 color: #F0F0F0;
@@ -73,15 +89,18 @@ class DownloadPage(Page):
             QPushButton:hover {
                 background-color: #7247CB;
             }
-        """)
+        """
+        )
         choose_dir_button.setFont(self.regular_font)
         choose_dir_button.setCursor(Qt.PointingHandCursor)
         choose_dir_button.clicked.connect(self.choose_directory)
-        frame_layout.addWidget(choose_dir_button, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        
+        frame_layout.addWidget(
+            choose_dir_button, alignment=Qt.AlignTop | Qt.AlignHCenter
+        )
+
         frame.setLayout(frame_layout)
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
-        
+
         # Объединяем все части в один макет
         layout = QVBoxLayout()
         layout.addSpacing(20)  # Добавляем отступ сверху для navbar
@@ -97,10 +116,10 @@ class DownloadPage(Page):
         if mc_dir:
             self.mc_dir = mc_dir
             print(f"Selected directory: {mc_dir}")
-            save_user_data(
+            self.data_manip.save_user_data(
                 new_data={"mc_dir": mc_dir},
                 directory=self.config_dir,
-                json_file=self.user_data_json
+                json_file=self.user_data_json,
             )
             self.go_to_install.emit()
         else:
@@ -120,15 +139,19 @@ class DownloadPage(Page):
 
     def download_status(self) -> bool:
         dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
-
         required_folders = ["assets", "libraries", "runtime", "versions"]
         if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
             ic(dgrmc_dir)
             return True
         else:
-            if (dgrmc_dir is False and self.username_var not in ("", None) and
-                    self.password_var not in ("", None)):
+            if (
+                dgrmc_dir is False
+                and self.username_var not in ("", None)
+                and self.password_var not in ("", None)
+            ):
                 return True
             else:
-                ic(f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}")
+                ic(
+                    f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}"
+                )
                 return False

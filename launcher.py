@@ -4,9 +4,19 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QStackedWidget
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtCore import Qt
 from icecream import ic
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from pages import RegistrationPage, LauncherSettings, HomePage, GameSettings, \
-    MainPage, AccountPage, LoginPage, DownloadPage, InstallPage
+from pages import (
+    RegistrationPage,
+    LauncherSettings,
+    HomePage,
+    GameSettings,
+    MainPage,
+    AccountPage,
+    LoginPage,
+    DownloadPage,
+    InstallPage,
+)
 
 
 class Launcher(QMainWindow):
@@ -22,51 +32,25 @@ class Launcher(QMainWindow):
         self.signals_setup()
 
     def signals_setup(self):
-        self.home_page.go_to_account.connect(
-            self.show_account_page
-        )
-        self.account_page.go_to_reg.connect(
-            self.show_registration_page
-        )
-        self.account_page.go_to_main_page.connect(
-            self.show_main_page
-        )
-        self.account_page.go_to_download_page.connect(
-            self.show_download_page
-        )
-        self.registration_page.go_to_login.connect(
-            self.show_login_page
-        )
-        self.registration_page.registration_complete.connect(
-            self.show_download_page
-        )
-        self.login_page.go_to_reg.connect(
-            self.show_registration_page
-        )
-        self.download_page.go_to_install.connect(
-            self.show_install_page
-        )
-        self.install_page.download_complete.connect(
-            self.show_main_page
-        )
-        self.main_page.to_settings.connect(
-            self.show_launcher_settings_page
-        )
+        self.home_page.go_to_account.connect(self.show_account_page)
+        self.account_page.go_to_reg.connect(self.show_registration_page)
+        self.account_page.go_to_main_page.connect(self.show_main_page)
+        self.account_page.go_to_download_page.connect(self.show_download_page)
+        self.registration_page.go_to_login.connect(self.show_login_page)
+        self.registration_page.registration_complete.connect(self.show_download_page)
+        self.login_page.go_to_reg.connect(self.show_registration_page)
+        self.download_page.go_to_install.connect(self.show_install_page)
+        self.install_page.download_complete.connect(self.show_main_page)
+        self.main_page.to_settings.connect(self.show_launcher_settings_page)
         self.launcher_settings_page.to_game_settings.connect(
             self.show_game_settings_page
         )
-        self.launcher_settings_page.go_back.connect(
-            self.show_main_page
-        )
-        self.launcher_settings_page.to_account.connect(
-            self.show_account_page
-        )
+        self.launcher_settings_page.go_back.connect(self.show_main_page)
+        self.launcher_settings_page.to_account.connect(self.show_account_page)
         self.game_settings_page.to_launcher_settings.connect(
             self.show_launcher_settings_page
         )
-        self.game_settings_page.go_back.connect(
-            self.show_main_page
-        )
+        self.game_settings_page.go_back.connect(self.show_main_page)
 
     def setupWindow(self) -> None:
         self.setWindowTitle("Danga Launcher")
@@ -77,8 +61,7 @@ class Launcher(QMainWindow):
         painter = QPainter(self)
         try:
             scaled_image = self.background_image.scaled(
-                self.size(),
-                Qt.KeepAspectRatioByExpanding
+                self.size(), Qt.KeepAspectRatioByExpanding
             )
             painter.drawPixmap(0, 0, scaled_image)
         finally:
@@ -108,7 +91,6 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.install_page)
         self.stacked_widget.addWidget(self.launcher_settings_page)
         self.stacked_widget.addWidget(self.game_settings_page)
-
         self.setCentralWidget(self.stacked_widget)
         self.stacked_widget.setCurrentWidget(self.home_page)
 
@@ -181,11 +163,13 @@ class Launcher(QMainWindow):
         self.launcher_settings_page.hide()
         self.game_settings_page.hide()
 
+
 def main():
     app = QApplication(sys.argv)
     launcher = Launcher()
     launcher.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
