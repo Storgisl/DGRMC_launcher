@@ -232,8 +232,8 @@ class InstallPage(Page):
             print(f"Error during extraction and merge: {e}")
 
     def install_neccesary_files(self) -> None:
-        mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         """Download and install mods, resource packs, and emotes."""
+        mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         base_url = "https://github.com/Storgisl/dg_files/releases/download/v1.0/"
 
         def download_file(url: str, file_path: Path) -> None:
@@ -259,20 +259,22 @@ class InstallPage(Page):
         def install_mods() -> None:
             url = base_url + "mods.zip"
             file_path = Path(mc_dir) / "mods.zip"
-            download_file(url, file_path)
-            self.unzip_and_merge(file_path, Path(mc_dir) / "mods")
+            download_file(url=url, file_path=file_path)
+            self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "mods")
 
         def install_rpacks() -> None:
             url = base_url + "resourcepacks.zip"
             file_path = Path(mc_dir) / "resourcepacks.zip"
-            download_file(url, file_path)
-            self.unzip_and_merge(file_path, Path(mc_dir) / "resourcepacks")
+            download_file(url=url, file_path=file_path)
+            self.unzip_and_merge(
+                zip_path=file_path, target_dir=Path(mc_dir) / "resourcepacks"
+            )
 
         def install_emotes() -> None:
             url = base_url + "emotes.zip"
             file_path = Path(mc_dir) / "emotes.zip"
-            download_file(url, file_path)
-            self.unzip_and_merge(file_path, Path(mc_dir) / "emotes")
+            download_file(url=url, file_path=file_path)
+            self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "emotes")
 
         try:
             install_emotes()
@@ -288,12 +290,6 @@ class InstallPage(Page):
             install_mods()
         except Exception as e:
             print(f"error: {e}")
-
-            # Delete the ZIP archive
-            zip_path.unlink()
-            print(f"Extracted and merged contents of {zip_path.name} into {target_dir}")
-        except Exception as e:
-            print(f"Error during extraction and merge: {e}")
 
     def install_mc(self) -> None:
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
