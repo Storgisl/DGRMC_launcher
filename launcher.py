@@ -14,8 +14,7 @@ from pages import (
     MainPage,
     AccountPage,
     LoginPage,
-    DownloadPage,
-    InstallPage,
+    DownloadPage
 )
 
 
@@ -39,8 +38,7 @@ class Launcher(QMainWindow):
         self.registration_page.go_to_login.connect(self.show_login_page)
         self.registration_page.registration_complete.connect(self.show_download_page)
         self.login_page.go_to_reg.connect(self.show_registration_page)
-        self.download_page.go_to_install.connect(self.show_install_page)
-        self.install_page.download_complete.connect(self.show_main_page)
+        self.download_page.download_complete.connect(self.show_main_page) # download_complete после загрузки всего
         self.main_page.to_settings.connect(self.show_launcher_settings_page)
         self.launcher_settings_page.to_game_settings.connect(
             self.show_game_settings_page
@@ -75,7 +73,6 @@ class Launcher(QMainWindow):
         self.download_page = DownloadPage(self.stacked_widget)
         self.account_page = AccountPage(self.stacked_widget)
         self.main_page = MainPage(self.stacked_widget)
-        self.install_page = InstallPage(self.stacked_widget)
         self.launcher_settings_page = LauncherSettings(self.stacked_widget)
         self.game_settings_page = GameSettings(self.stacked_widget)
 
@@ -88,7 +85,6 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.download_page)
         self.stacked_widget.addWidget(self.account_page)
         self.stacked_widget.addWidget(self.main_page)
-        self.stacked_widget.addWidget(self.install_page)
         self.stacked_widget.addWidget(self.launcher_settings_page)
         self.stacked_widget.addWidget(self.game_settings_page)
         self.setCentralWidget(self.stacked_widget)
@@ -140,10 +136,6 @@ class Launcher(QMainWindow):
         ic("main")
         self.stacked_widget.setCurrentWidget(self.main_page)
 
-    def show_install_page(self):
-        ic("install")
-        self.stacked_widget.setCurrentWidget(self.install_page)
-
     def show_launcher_settings_page(self):
         ic("launcher settings")
         self.stacked_widget.setCurrentWidget(self.launcher_settings_page)
@@ -158,7 +150,6 @@ class Launcher(QMainWindow):
         self.registration_page.hide()
         self.login_page.hide()
         self.download_page.hide()
-        self.install_page.hide()
         self.main_page.hide()
         self.launcher_settings_page.hide()
         self.game_settings_page.hide()

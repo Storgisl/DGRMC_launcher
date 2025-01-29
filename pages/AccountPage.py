@@ -28,6 +28,32 @@ class AccountPage(Page):
         self.init_ui()
 
     def init_ui(self):
+        # Navbar
+        navbar_layout = QHBoxLayout()
+        navbar_layout.setContentsMargins(
+            40, 0, 40, 0
+        )  # Добавляем отступы слева и справа
+        logo_label = QLabel(self)
+        logo_pixmap = QPixmap("assets/Logo.png")
+        logo_label.setPixmap(logo_pixmap)
+        navbar_layout.addWidget(logo_label, alignment=Qt.AlignLeft)
+        version_label = QLabel("v2.1.1", self)
+        version_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 16px;
+                color: #F0F0F0;
+                padding: 0;
+                vertical-align: middle;
+            }
+        """
+        )
+        version_label.setFont(self.medium_font)
+        navbar_layout.addWidget(version_label, alignment=Qt.AlignRight)
+        navbar_frame = QFrame(self)
+        navbar_frame.setLayout(navbar_layout)
+        navbar_frame.setFixedHeight(44)
+
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)
 
@@ -132,7 +158,7 @@ class AccountPage(Page):
             add_account_button.setCursor(Qt.PointingHandCursor)
             add_account_button.clicked.connect(self.add_account)
             frame_layout.addWidget(add_account_button, alignment=Qt.AlignCenter)
-            # Надпись
+
             add_account_label = QLabel("Add any account", self)
             add_account_label.setStyleSheet(
                 """
@@ -149,9 +175,9 @@ class AccountPage(Page):
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
 
         layout = QVBoxLayout()
-        layout.addSpacing(20)  # Добавляем отступ сверху для navbar
-        layout.addWidget(self.navbar_frame)
-        layout.addSpacing(80)  # Добавляем отступ после navbar
+        layout.addSpacing(20)
+        layout.addWidget(navbar_frame)
+        layout.addSpacing(80)
         layout.addLayout(main_layout)
         layout.addStretch()
         layout.addLayout(self.footer_layout)

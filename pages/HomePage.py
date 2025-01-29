@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QSpacerItem, QSizePolicy
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QSpacerItem, QSizePolicy, QFrame, QHBoxLayout
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
 
@@ -14,6 +14,32 @@ class HomePage(Page):
         self.init_ui()
 
     def init_ui(self):
+        # Navbar
+        navbar_layout = QHBoxLayout()
+        navbar_layout.setContentsMargins(
+            40, 0, 40, 0
+        )  # Добавляем отступы слева и справа
+        logo_label = QLabel(self)
+        logo_pixmap = QPixmap("assets/Logo.png")
+        logo_label.setPixmap(logo_pixmap)
+        navbar_layout.addWidget(logo_label, alignment=Qt.AlignLeft)
+        version_label = QLabel("v2.1.1", self)
+        version_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 16px;
+                color: #F0F0F0;
+                padding: 0;
+                vertical-align: middle;
+            }
+        """
+        )
+        version_label.setFont(self.medium_font)
+        navbar_layout.addWidget(version_label, alignment=Qt.AlignRight)
+        navbar_frame = QFrame(self)
+        navbar_frame.setLayout(navbar_layout)
+        navbar_frame.setFixedHeight(44)
+
         # Центральная часть страницы
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)  # Центрируем элементы
@@ -53,7 +79,7 @@ class HomePage(Page):
         main_layout.addWidget(start_button, alignment=Qt.AlignCenter)
         layout = QVBoxLayout()
         layout.addSpacing(20)
-        layout.addWidget(self.navbar_frame)
+        layout.addWidget(navbar_frame)
         layout.addSpacing(60)
         layout.addLayout(main_layout)
         layout.addStretch()

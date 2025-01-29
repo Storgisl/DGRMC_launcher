@@ -27,16 +27,15 @@ class LoginPage(Page):
         self.init_ui()
 
     def init_ui(self):
-        # Navbar
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(40, 0, 40, 0)
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
         navbar_layout.addWidget(logo_label, alignment=Qt.AlignLeft)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_layout.addSpacing(165)
-        # Кнопка Sign in
+
         sign_in_button = QPushButton("Sign In", self)
         sign_in_button.setStyleSheet(
             """
@@ -50,9 +49,9 @@ class LoginPage(Page):
         )
         sign_in_button.setFont(self.medium_font)
         navbar_layout.addWidget(sign_in_button)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_layout.addStretch()
-        # Кнопка Sign Up
+
         sign_up_button = QPushButton("Sign Up", self)
         sign_up_button.setStyleSheet(
             """
@@ -71,7 +70,7 @@ class LoginPage(Page):
         sign_up_button.setCursor(Qt.PointingHandCursor)
         sign_up_button.clicked.connect(self.show_sign_up_page)
         navbar_layout.addWidget(sign_up_button)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_layout.addStretch()
         version_label = QLabel("v2.1.1", self)
         version_label.setStyleSheet(
@@ -86,14 +85,14 @@ class LoginPage(Page):
         )
         version_label.setFont(self.medium_font)
         navbar_layout.addWidget(version_label, alignment=Qt.AlignCenter)
-        # Создаем рамку для navbar
+
         navbar_frame = QFrame(self)
         navbar_frame.setLayout(navbar_layout)
         navbar_frame.setFixedHeight(44)
-        # Центральная часть страницы
+
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)
-        # Фрейм с размером 440x300
+
         frame = QFrame(self)
         frame.setFixedSize(440, 300)
         frame.setStyleSheet(
@@ -106,7 +105,7 @@ class LoginPage(Page):
         )
         frame_layout = QVBoxLayout()
         frame_layout.setAlignment(Qt.AlignCenter)
-        # Картинка
+
         text_image_label = QLabel(self)
         text_image_pixmap = QPixmap("assets/TextLogin.png")
         text_image_label.setPixmap(text_image_pixmap)
@@ -115,7 +114,7 @@ class LoginPage(Page):
         )
         top_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         frame_layout.addItem(top_spacer)
-        # Надпись Nickname
+
         nickname_label = QLabel("Nickname", self)
         nickname_label.setStyleSheet(
             """
@@ -127,7 +126,7 @@ class LoginPage(Page):
         )
         nickname_label.setFont(self.regular_font)
         frame_layout.addWidget(nickname_label, alignment=Qt.AlignLeft | Qt.AlignHCenter)
-        # Поле для ввода никнейма
+
         self.username_text = QLineEdit(self)
         self.username_text.setPlaceholderText("")
         self.username_text.setAlignment(Qt.AlignCenter)
@@ -149,7 +148,7 @@ class LoginPage(Page):
         frame_layout.addWidget(
             self.username_text, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
-        # Надпись Password
+
         password_label = QLabel("Password", self)
         password_label.setStyleSheet(
             """
@@ -161,7 +160,7 @@ class LoginPage(Page):
         )
         password_label.setFont(self.regular_font)
         frame_layout.addWidget(password_label, alignment=Qt.AlignLeft | Qt.AlignHCenter)
-        # Поле для ввода пароля
+
         self.password_text = QLineEdit(self)
         self.password_text.setPlaceholderText("")
         self.password_text.setAlignment(Qt.AlignCenter)
@@ -186,7 +185,7 @@ class LoginPage(Page):
         )
         top_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         frame_layout.addItem(top_spacer)
-        # Кнопка Enter
+
         enter_button = QPushButton("Enter", self)
         enter_button.setStyleSheet(
             """
@@ -209,7 +208,7 @@ class LoginPage(Page):
         frame_layout.addItem(top_spacer)
         frame.setLayout(frame_layout)
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
-        # Объединяем все части в один макет
+
         layout = QVBoxLayout()
         layout.addSpacing(20)
         layout.addWidget(navbar_frame)

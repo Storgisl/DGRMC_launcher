@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 from PySide6.QtWidgets import (
     QLabel,
@@ -28,7 +29,6 @@ class LauncherSettings(Page):
         self.init_ui()
 
     def init_ui(self):
-        # Navbar
         navbar_settings_layout = QHBoxLayout()
         navbar_settings_layout.setContentsMargins(40, 0, 40, 0)
         logo_label = QLabel(self)
@@ -51,7 +51,7 @@ class LauncherSettings(Page):
         sign_in_button.setFont(self.medium_font)
         navbar_settings_layout.addWidget(sign_in_button)
         navbar_settings_layout.addSpacing(160)
-        # Кнопка Sign Up
+
         sign_up_button = QPushButton("Game settings", self)
         sign_up_button.setStyleSheet(
             """
@@ -71,7 +71,7 @@ class LauncherSettings(Page):
         sign_up_button.setCursor(Qt.PointingHandCursor)
         sign_up_button.clicked.connect(self.show_game_settings_page)
         navbar_settings_layout.addWidget(sign_up_button)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_settings_layout.addStretch()
         version_label = QLabel("v2.1.1", self)
         version_label.setStyleSheet(
@@ -139,7 +139,7 @@ class LauncherSettings(Page):
         back_button.clicked.connect(self.go_back_to_main)
         inner_navbar_settings_layout.addWidget(back_button)
         frame_layout.addLayout(inner_navbar_settings_layout)
-        ###########################################################
+
         top_spacer = QSpacerItem(0, 30, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
         change_account = QLabel("You may change account", self)
@@ -179,8 +179,8 @@ class LauncherSettings(Page):
         frame_layout.addWidget(change_button, alignment=Qt.AlignCenter)
         top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
-        check_updates = QLabel("Check for updates", self)
-        check_updates.setStyleSheet(
+        self.check_updates_label = QLabel("Check for updates", self)
+        self.check_updates_label.setStyleSheet(
             """
             QLabel {
                 font-size: 16px;
@@ -189,8 +189,8 @@ class LauncherSettings(Page):
             }
         """
         )
-        check_updates.setFont(self.extra_light_font)
-        frame_layout.addWidget(check_updates, alignment=Qt.AlignCenter)
+        self.check_updates_label.setFont(self.extra_light_font)
+        frame_layout.addWidget(self.check_updates_label, alignment=Qt.AlignCenter)
         check_upd_button = QPushButton("Check", self)
         check_upd_button.setStyleSheet(
             """
@@ -251,9 +251,10 @@ class LauncherSettings(Page):
         open_folder_button.setCursor(Qt.PointingHandCursor)
         open_folder_button.clicked.connect(self.open_folder)
         frame_layout.addWidget(open_folder_button, alignment=Qt.AlignCenter)
+
         frame.setLayout(frame_layout)
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
-        # Объединяем все части в один макет
+
         layout = QVBoxLayout()
         layout.addSpacing(20)
         layout.addWidget(navbar_settings_frame)

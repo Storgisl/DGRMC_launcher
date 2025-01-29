@@ -33,15 +33,15 @@ class GameSettings(Page):
         self.init_ui()
 
     def init_ui(self):
-        # Navbar
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(40, 0, 40, 0)
+
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
         navbar_layout.addWidget(logo_label, alignment=Qt.AlignLeft)
-        # Добавляем растяжку для равномерного распределения элементов
         navbar_layout.addSpacing(140)
+
         sign_in_button = QPushButton("Launcher settings", self)
         sign_in_button.setStyleSheet(
             """
@@ -61,8 +61,9 @@ class GameSettings(Page):
         sign_in_button.clicked.connect(self.show_launcher_settings_page)
         sign_in_button.setCursor(Qt.PointingHandCursor)
         navbar_layout.addWidget(sign_in_button)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_layout.addSpacing(160)
+
         sign_up_button = QPushButton("Game settings", self)
         sign_up_button.setStyleSheet(
             """
@@ -77,8 +78,9 @@ class GameSettings(Page):
         )
         sign_up_button.setFont(self.medium_font)
         navbar_layout.addWidget(sign_up_button)
-        # Добавляем растяжку для равномерного распределения элементов
+
         navbar_layout.addStretch()
+
         version_label = QLabel("v2.1.1", self)
         version_label.setStyleSheet(
             """
@@ -93,14 +95,14 @@ class GameSettings(Page):
         )
         version_label.setFont(self.medium_font)
         navbar_layout.addWidget(version_label, alignment=Qt.AlignCenter)
-        # Создаем рамку для navbar
+
         navbar_frame = QFrame(self)
         navbar_frame.setLayout(navbar_layout)
         navbar_frame.setFixedHeight(44)
-        # Центральная часть страницы
+
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)
-        # Фрейм с размером 440x300
+
         frame = QFrame(self)
         frame.setFixedSize(400, 400)
         frame.setStyleSheet(
@@ -113,8 +115,10 @@ class GameSettings(Page):
         )
         frame_layout = QVBoxLayout()
         frame_layout.setAlignment(Qt.AlignTop)
+
         inner_navbar_layout = QHBoxLayout()
         inner_navbar_layout.setAlignment(Qt.AlignLeft)
+
         back_button = QPushButton(self)
         back_button.setStyleSheet(
             """
@@ -147,11 +151,14 @@ class GameSettings(Page):
         back_button.setText("back")
         back_button.setFont(self.extra_light_font)
         back_button.clicked.connect(self.go_back_to_main)
+
         inner_navbar_layout.addWidget(back_button)
+
         frame_layout.addLayout(inner_navbar_layout)
-        ###########################################################
+
         top_spacer = QSpacerItem(0, 30, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
+
         memory_label = QLabel("Game memory amount", self)
         memory_label.setStyleSheet(
             """
@@ -164,8 +171,10 @@ class GameSettings(Page):
         )
         memory_label.setFont(self.extra_light_font)
         frame_layout.addWidget(memory_label, alignment=Qt.AlignCenter)
+
         top_spacer = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
+
         max_ram = self.get_max_system_ram()
         memory_slider = QSlider(Qt.Horizontal)
         memory_slider.setMinimum(2048)
@@ -197,11 +206,14 @@ class GameSettings(Page):
         )
         memory_slider.valueChanged.connect(self.update_value_line)
         frame_layout.addWidget(memory_slider, alignment=Qt.AlignCenter)
+
         top_spacer = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
+
         labels_layout = QHBoxLayout()
         labels_layout.setContentsMargins(17, 0, 17, 0)
         labels_layout.setAlignment(Qt.AlignCenter)
+
         label1 = QLabel("2048")
         label1.setStyleSheet(
             """
@@ -214,7 +226,9 @@ class GameSettings(Page):
         )
         label1.setFont(self.extra_light_font)
         labels_layout.addWidget(label1)
+
         labels_layout.addStretch()
+
         value_line = QLineEdit(self)
         value_line.setPlaceholderText(f"{str(memory_slider.value())} MiB")
         value_line.setAlignment(Qt.AlignCenter)
@@ -236,7 +250,9 @@ class GameSettings(Page):
         value_line.setFont(self.light_font)
         value_line.editingFinished.connect(self.update_slider_value)
         labels_layout.addWidget(value_line)
+
         labels_layout.addStretch()
+
         label2 = QLabel(f"{max_ram}")
         label2.setStyleSheet(
             """
@@ -250,9 +266,10 @@ class GameSettings(Page):
         label2.setFont(self.extra_light_font)
         labels_layout.addWidget(label2)
         frame_layout.addLayout(labels_layout)
-        top_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+
+        top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
-        ##########################################
+
         resolution_label = QLabel("Window resolution", self)
         resolution_label.setStyleSheet(
             """
@@ -265,11 +282,14 @@ class GameSettings(Page):
         )
         resolution_label.setFont(self.extra_light_font)
         frame_layout.addWidget(resolution_label, alignment=Qt.AlignCenter)
+
         top_spacer = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
+
         resolution_layout = QHBoxLayout()
         resolution_layout.setContentsMargins(17, 0, 17, 0)
         resolution_layout.setAlignment(Qt.AlignCenter)
+
         width_line = QLineEdit(self)
         width_line.setPlaceholderText("1920")
         width_line.setAlignment(Qt.AlignCenter)
@@ -290,6 +310,7 @@ class GameSettings(Page):
         )
         width_line.setFont(self.regular_font)
         resolution_layout.addWidget(width_line)
+
         x_label = QLabel("x")
         x_label.setStyleSheet(
             """
@@ -302,6 +323,7 @@ class GameSettings(Page):
         )
         x_label.setFont(self.extra_light_font)
         resolution_layout.addWidget(x_label)
+
         height_line = QLineEdit(self)
         height_line.setPlaceholderText("1080")
         height_line.setAlignment(Qt.AlignCenter)
@@ -322,7 +344,9 @@ class GameSettings(Page):
         )
         height_line.setFont(self.regular_font)
         resolution_layout.addWidget(height_line)
+
         resolution_layout.addStretch()
+
         fs_label = QLabel("Fullscreen mode")
         fs_label.setStyleSheet(
             """
@@ -335,7 +359,9 @@ class GameSettings(Page):
         )
         fs_label.setFont(self.extra_light_font)
         resolution_layout.addWidget(fs_label)
+
         resolution_layout.addSpacing(0)
+
         checkbox = QCheckBox("", self)
         checkbox.setStyleSheet(
             """
@@ -362,12 +388,14 @@ class GameSettings(Page):
         checkbox.stateChanged.connect(self.on_checkbox_state_changed)
         resolution_layout.addWidget(checkbox)
         frame_layout.addLayout(resolution_layout)
-        top_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+
+        top_spacer = QSpacerItem(0, 40, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
-        ##########################################
+
         delete_layout = QHBoxLayout()
         delete_layout.setContentsMargins(17, 0, 17, 0)
         delete_layout.setAlignment(Qt.AlignCenter)
+
         delete_label = QLabel("Delete minecraft")
         delete_label.setStyleSheet(
             """
@@ -380,7 +408,9 @@ class GameSettings(Page):
         )
         delete_label.setFont(self.extra_light_font)
         delete_layout.addWidget(delete_label)
+
         delete_layout.addStretch()
+
         self.delete_line = QLineEdit(self)
         self.delete_line.setPlaceholderText('Type "delete"')
         self.delete_line.setAlignment(Qt.AlignCenter)
@@ -401,7 +431,9 @@ class GameSettings(Page):
         )
         self.delete_line.setFont(self.regular_font)
         delete_layout.addWidget(self.delete_line)
+
         delete_layout.addStretch()
+
         delete_button = QPushButton(self)
         delete_button.setStyleSheet(
             """
@@ -425,8 +457,37 @@ class GameSettings(Page):
         delete_button.clicked.connect(self.delete_mc)
         delete_layout.addWidget(delete_button)
         frame_layout.addLayout(delete_layout)
+
+        top_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        frame_layout.addItem(top_spacer)
+
+        save_button = QPushButton("Save", self)
+        save_button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(0, 0, 0, 0);
+                border: none;
+                color: #F0F0F0;
+                font-size: 16px;
+                font-weight: 400;
+                min-height: 45px;
+                max-height: 45px;
+                min-width: 45px;
+                max-width: 45px;
+            }
+            QPushButton:hover {
+                text-decoration: underline;
+            }
+        """
+        )
+        save_button.setFont(self.regular_font)
+        save_button.setCursor(Qt.PointingHandCursor)
+        save_button.clicked.connect(self.generate_jvm_arguments)
+        frame_layout.addWidget(save_button, alignment=Qt.AlignCenter)
+
         frame.setLayout(frame_layout)
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
+
         layout = QVBoxLayout()
         layout.addSpacing(20)
         layout.addWidget(navbar_frame)
@@ -435,7 +496,7 @@ class GameSettings(Page):
         layout.addStretch()
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
-        # Сохраняем ссылки на объекты для последующего использования
+
         self.memory_slider = memory_slider
         self.value_line = value_line
 
@@ -456,11 +517,11 @@ class GameSettings(Page):
             self.memory_slider.setValue(new_value)
             self.value_line.setPlaceholderText(f"{str(new_value)} MiB")
         except ValueError:
-            # Если введено некорректное значение, оставляем старое значение
             self.value_line.setText("")
             self.value_line.setPlaceholderText(f"{str(self.memory_slider.value())} MiB")
 
     def generate_jvm_arguments(self):
+        print("generate_jvm_arguments")
         pass
 
     def delete_mc(self):
@@ -471,6 +532,7 @@ class GameSettings(Page):
             except Exception as e:
                 print(f"Error: {e}")
         else:
+            print("no text")
             pass
 
     def on_checkbox_state_changed(self, state):

@@ -70,31 +70,6 @@ class Page(QWidget):
         self.extra_light_font = QFont(
             QFontDatabase.applicationFontFamilies(self.extra_light_font_id)[0]
         )
-        # Navbar
-        self.navbar_layout = QHBoxLayout()
-        self.navbar_layout.setContentsMargins(
-            40, 0, 40, 0
-        )  # Добавляем отступы слева и справа
-        self.logo_label = QLabel(self)
-        self.logo_pixmap = QPixmap("assets/Logo.png")
-        self.logo_label.setPixmap(self.logo_pixmap)
-        self.navbar_layout.addWidget(self.logo_label, alignment=Qt.AlignLeft)
-        self.version_label = QLabel("v2.1.1", self)
-        self.version_label.setStyleSheet(
-            """
-            QLabel {
-                font-size: 16px;
-                color: #F0F0F0;
-                padding: 0;
-                vertical-align: middle;
-            }
-        """
-        )
-        self.version_label.setFont(self.medium_font)
-        self.navbar_layout.addWidget(self.version_label, alignment=Qt.AlignRight)
-        self.navbar_frame = QFrame(self)
-        self.navbar_frame.setLayout(self.navbar_layout)
-        self.navbar_frame.setFixedHeight(44)
         # Footer
         self.footer_layout = QHBoxLayout()
         self.footer_layout.setContentsMargins(40, 0, 40, 0)
