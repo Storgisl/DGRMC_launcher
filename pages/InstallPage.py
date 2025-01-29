@@ -2,26 +2,25 @@ import sys
 import os
 import time
 import threading
+import subprocess
 import zipfile
 import shutil
-
 import minecraft_launcher_lib as mc_lib
 import requests
-
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
+    QFileDialog,
     QLabel,
-    QProgressBar,
     QFrame,
     QSpacerItem,
     QSizePolicy,
+    QHBoxLayout,
 )
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QMovie
 from PySide6.QtCore import Signal, Qt
 from icecream import ic
 from pathlib import Path
-
 from .Page import Page
 
 
@@ -33,19 +32,42 @@ class InstallPage(Page):
 
     def __init__(self, stacked_widget):
         super().__init__()
-        self.setObjectName("install_page")
+        self.setObjectName("download_page")
         self.stacked_widget = stacked_widget
         self.init_ui()
 
     def init_ui(self):
-        # Центральная часть страницы
+        # Navbar
+        navbar_layout = QHBoxLayout()
+        navbar_layout.setContentsMargins(
+            40, 0, 40, 0
+        )  # Добавляем отступы слева и справа
+        logo_label = QLabel(self)
+        logo_pixmap = QPixmap("assets/Logo.png")
+        logo_label.setPixmap(logo_pixmap)
+        navbar_layout.addWidget(logo_label, alignment=Qt.AlignLeft)
+        version_label = QLabel("v2.1.1", self)
+        version_label.setStyleSheet(
+            """
+            QLabel {
+                font-size: 16px;
+                color: #F0F0F0;
+                padding: 0;
+                vertical-align: middle;
+            }
+        """
+        )
+        version_label.setFont(self.medium_font)
+        navbar_layout.addWidget(version_label, alignment=Qt.AlignRight)
+        navbar_frame = QFrame(self)
+        navbar_frame.setLayout(navbar_layout)
+        navbar_frame.setFixedHeight(44)
+
         main_layout = QVBoxLayout()
         main_layout.setAlignment(Qt.AlignCenter)
-
-        # Фрейм с размером 427x418
-        self.frame = QFrame(self)
-        self.frame.setFixedSize(427, 200)
-        self.frame.setStyleSheet(
+        frame = QFrame(self)
+        frame.setFixedSize(427, 200)
+        frame.setStyleSheet(
             """
             QFrame {
                 background-color: #412483;
@@ -54,14 +76,9 @@ class InstallPage(Page):
         """
         )
         self.frame_layout = QVBoxLayout()
-        self.frame_layout.setAlignment(
-            Qt.AlignTop
-        )  # Выравниваем элементы по верхней части фрейма
-        self.frame_layout.setSpacing(
-            10
-        )  # Устанавливаем меньший отступ между элементами
+        self.frame_layout.setAlignment(Qt.AlignTop)
+        self.frame_layout.setSpacing(10)
 
-        # Картинка
         text_image_label = QLabel(self)
         text_image_pixmap = QPixmap("assets/Text.png")
         text_image_label.setPixmap(text_image_pixmap)
@@ -69,25 +86,24 @@ class InstallPage(Page):
             text_image_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
 
-        # Добавляем небольшой отступ между картинкой и надписью
         top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.frame_layout.addItem(top_spacer)
 
-        label = QLabel("You are closer than you think", self)
-        label.setStyleSheet(
+        self.label = QLabel("Please, choose installation folder", self)
+        self.label.setStyleSheet(
             """
             QLabel {
                 font-size: 14px;
                 color: #7247CB;
+                font-weight: 200;
             }
         """
         )
-        label.setFont(self.light_font)
-        self.frame_layout.addWidget(label, alignment=Qt.AlignTop | Qt.AlignHCenter)
+        self.label.setFont(self.light_font)
+        self.frame_layout.addWidget(self.label, alignment=Qt.AlignTop | Qt.AlignHCenter)
 
-        # Кнопка Install
-        self.install_mc_button = QPushButton("Install", self)
-        self.install_mc_button.setStyleSheet(
+        self.choose_dir_button = QPushButton("Choose", self)
+        self.choose_dir_button.setStyleSheet(
             """
             QPushButton {
                 background-color: #503684;
@@ -104,70 +120,119 @@ class InstallPage(Page):
             }
         """
         )
-        self.install_mc_button.setFont(self.regular_font)
-        self.install_mc_button.setCursor(Qt.PointingHandCursor)
-        self.install_mc_button.clicked.connect(self.start_installation)
+        self.choose_dir_button.setFont(self.regular_font)
+        self.choose_dir_button.setCursor(Qt.PointingHandCursor)
+        self.choose_dir_button.clicked.connect(self.choose_directory)
         self.frame_layout.addWidget(
-            self.install_mc_button, alignment=Qt.AlignTop | Qt.AlignHCenter
+            self.choose_dir_button, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
 
-        # Метка с статусом
-        self.progress_label = QLabel("Status: Waiting", self)
-        self.progress_label.setFont(self.regular_font)
-        self.progress_label.setVisible(False)  # Скрываем метку до начала установки
-
-        # Прогресс-бар
-        self.progress_bar = QProgressBar(self)
-        self.progress_bar.setStyleSheet(
-            """
-            QProgressBar {
-                background-color: #503684;
-                border-radius: 8px;
-                height: 30px;
-                width: 385px;
-            }
-            QProgressBar::chunk {
-                background-color: #7247CB;
-                border-radius: 8px;
-            }
-            QProgressBar::indicator {
-                background-color: #7247CB;
-                border-radius: 8px;
-            }
-        """
-        )
-        self.progress_bar.setAlignment(Qt.AlignCenter)
-        self.progress_bar.setFont(self.regular_font)
-        self.progress_bar.setVisible(False)
-
-        self.frame.setLayout(self.frame_layout)
-        main_layout.addWidget(self.frame, alignment=Qt.AlignCenter)
+        frame.setLayout(self.frame_layout)
+        main_layout.addWidget(frame, alignment=Qt.AlignCenter)
         layout = QVBoxLayout()
         layout.addSpacing(20)
-        layout.addWidget(self.navbar_frame)
+        layout.addWidget(navbar_frame)
         layout.addSpacing(110)
         layout.addLayout(main_layout)
         layout.addStretch()
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
-        self.set_status_signal.connect(self.set_status)
-        self.set_progress_signal.connect(self.set_progress)
-        self.set_max_signal.connect(self.set_max)
-        self.download_complete.connect(self.on_download_complete)
+
+    def choose_directory(self) -> None:
+        mc_dir = QFileDialog.getExistingDirectory(self, "Choose Minecraft Directory")
+        if mc_dir:
+            self.mc_dir = mc_dir
+            print(f"Selected directory: {mc_dir}")
+            self.data_manip.save_user_data(
+                new_data={"mc_dir": mc_dir},
+                directory=self.config_dir,
+                json_file=self.user_data_json,
+            )
+
+            self.frame_layout.removeWidget(self.choose_dir_button)
+            self.choose_dir_button.deleteLater()
+            self.label.setText("You are closer than you think")
+
+            self.install_mc_button = QPushButton("Install", self)
+            self.install_mc_button.setStyleSheet(
+                """
+                QPushButton {
+                    background-color: #503684;
+                    color: #F0F0F0;
+                    font-size: 14px;
+                    font-weight: 400;
+                    border-radius: 8px;
+                    min-height: 30px;
+                    max-height: 30px;
+                    min-width: 150px;
+                    max-width: 150px;
+                }
+                QPushButton:hover {
+                    background-color: #7247CB;
+                }
+            """
+            )
+            self.install_mc_button.setFont(self.regular_font)
+            self.install_mc_button.setCursor(Qt.PointingHandCursor)
+            self.install_mc_button.clicked.connect(self.start_installation)
+            self.frame_layout.addWidget(
+                self.install_mc_button, alignment=Qt.AlignTop | Qt.AlignHCenter
+            )
+        else:
+            print("No directory chosen!")
+
+    def check_dirs(self, directory: str, folders: list) -> bool:
+        try:
+            contents = os.listdir(directory)
+            for folder in folders:
+                if folder not in contents:
+                    ic(f"folder '{folder}' is missing")
+                    return False
+            return True
+        except FileNotFoundError:
+            print(f"Directory '{directory}' not found.")
+            return False
+
+    def download_status(self) -> bool:
+        dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
+        required_folders = ["assets", "libraries", "runtime", "versions"]
+        if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
+            ic(dgrmc_dir)
+            return True
+        else:
+            if (
+                dgrmc_dir is False
+                and self.username_var not in ("", None)
+                and self.password_var not in ("", None)
+            ):
+                return True
+            else:
+                ic(
+                    f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}"
+                )
+                return False
 
     def start_installation(self) -> None:
         self.frame_layout.removeWidget(self.install_mc_button)
         self.install_mc_button.deleteLater()
+
+        self.label.setText("Starting installation...")
+
+        self.loading_gif_label = QLabel(self)
+        self.loading_gif = QMovie("assets/loading.gif")
+        self.loading_gif_label.setMovie(self.loading_gif)
+        self.loading_gif_label.setFixedSize(40, 40)
+        self.loading_gif.start()
         self.frame_layout.addWidget(
-            self.progress_bar, alignment=Qt.AlignTop | Qt.AlignHCenter
+            self.loading_gif_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
-        self.progress_label.setVisible(False)
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setTextVisible(False)
+
         thread = threading.Thread(target=self.install_mc, daemon=True)
         thread.start()
 
     def install_forge(self) -> None:
+        self.label.setText("Intalling Minecraft...")
+
         version = "1.20.1"
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         forge_version = mc_lib.forge.find_forge_version(version)
@@ -182,34 +247,20 @@ class InstallPage(Page):
                 path=mc_dir,
                 callback=callback,
             )
+            ic("Minecraft downloaded")
         else:
             print(f"Forge {forge_version} can't be installed automatically.")
             mc_lib.forge.run_forge_installer(version=forge_version)
-        self.download_complete.emit()
         self.set_status_signal.emit("Installation completed successfully!")
 
     def unzip_and_merge(self, zip_path: Path, target_dir: Path) -> None:
-        """
-        Unzip a file into the target directory and merge its contents with any existing files.
-        Deletes the ZIP archive after extraction.
-
-        Args:
-            zip_path (Path): The path to the ZIP file.
-            target_dir (Path): The directory where the contents will be extracted and merged.
-        """
         try:
-            # Ensure the target directory exists
             target_dir.mkdir(parents=True, exist_ok=True)
-
-            # Open the ZIP file
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 for zip_info in zip_ref.infolist():
                     extracted_path = target_dir / zip_info.filename
-
                     if extracted_path.exists():
-                        # If the file/folder already exists, merge them
                         if extracted_path.is_dir():
-                            # Merge directories
                             temp_dir = target_dir / f"{zip_info.filename}_temp"
                             temp_dir.mkdir(parents=True, exist_ok=True)
                             zip_ref.extract(zip_info, temp_dir)
@@ -221,10 +272,8 @@ class InstallPage(Page):
                                     shutil.copytree(item, dest, dirs_exist_ok=True)
                             shutil.rmtree(temp_dir)
                         else:
-                            # Skip or replace existing files
                             print(f"File {extracted_path} already exists. Skipping...")
                     else:
-                        # Extract normally if no conflict
                         zip_ref.extract(zip_info, target_dir)
                 zip_path.unlink()
             print(f"Extracted and merged contents of {zip_path.name} into {target_dir}")
@@ -232,70 +281,69 @@ class InstallPage(Page):
             print(f"Error during extraction and merge: {e}")
 
     def install_neccesary_files(self) -> None:
-        """Download and install mods, resource packs, and emotes."""
+        self.label.setText("Configuring Things...")
+
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         base_url = "https://github.com/Storgisl/dg_files/releases/download/v1.0/"
 
         def download_file(url: str, file_path: Path) -> None:
-            """Download a file and update the progress bar."""
             response = requests.get(url, stream=True)
             if response.status_code == 200:
                 total_size = int(response.headers.get("content-length", 0))
                 downloaded_size = 0
-
                 with open(file_path, "wb") as file:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             file.write(chunk)
                             downloaded_size += len(chunk)
-                            if total_size > 0:  # If content-length is available
-                                progress = int((downloaded_size / total_size) * 100)
-                            else:  # When content-length is not available
-                                progress = -1  # Indicate unknown progress
-
-                            self.progress_bar.setValue(
-                                progress
-                            )  # self.set_progress_signal.emit(progress)
-
-                if total_size > 0 and downloaded_size < total_size:
-                    raise Exception(f"Incomplete download: {file_path.name}")
-
+                            self.set_progress_signal.emit(
+                                int((downloaded_size / total_size) * 100)
+                            )
                 print(f"{file_path.name} downloaded successfully!")
             else:
-                raise Exception(
-                    f"Failed to download {file_path.name} with status code {response.status_code}"
-                )
+                print(f"Failed to download {file_path.name}")
 
         def install_mods() -> None:
+            self.label.setText("Installing Mods...")
+
             url = base_url + "mods.zip"
             file_path = Path(mc_dir) / "mods.zip"
             download_file(url=url, file_path=file_path)
+            ic("Mods downloaded")
             self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "mods")
+            ic("Mods installed")
+            self.set_status_signal.emit("Installation completed successfully!")
 
         def install_rpacks() -> None:
+            self.label.setText("Installing Resource packs...")
+
             url = base_url + "resourcepacks.zip"
             file_path = Path(mc_dir) / "resourcepacks.zip"
             download_file(url=url, file_path=file_path)
+            ic("Rpacks downloaded")
             self.unzip_and_merge(
                 zip_path=file_path, target_dir=Path(mc_dir) / "resourcepacks"
             )
+            ic("Rpacks installed")
 
         def install_emotes() -> None:
+            self.label.setText("Installing Emote packs...")
+
             url = base_url + "emotes.zip"
             file_path = Path(mc_dir) / "emotes.zip"
             download_file(url=url, file_path=file_path)
+            ic("Emotes downloaded")
             self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "emotes")
+            ic("Emotes installed")
 
         try:
             install_emotes()
         except Exception as e:
             print(f"error: {e}")
-
         try:
             install_rpacks()
         except Exception as e:
             print(f"error: {e}")
-
         try:
             install_mods()
         except Exception as e:
@@ -310,7 +358,6 @@ class InstallPage(Page):
             try:
                 self.install_forge()
                 self.install_neccesary_files()
-
             except Exception as e:
                 print(f"Error during installation attempt {attempt + 1}: {e}")
                 self.set_status_signal.emit(
@@ -322,15 +369,4 @@ class InstallPage(Page):
                     self.set_status_signal.emit(
                         "Installation failed after multiple attempts. Please try again."
                     )
-
-    def set_status(self, status: str):
-        self.progress_label.setText(f"Status: \n {status}")
-
-    def set_progress(self, progress: int):
-        self.progress_bar.setValue(progress)
-
-    def set_max(self, new_max: int):
-        self.progress_bar.setMaximum(new_max)
-
-    def on_download_complete(self):
-        print("Installation complete!")
+            self.download_complete.emit()
