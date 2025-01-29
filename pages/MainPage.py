@@ -36,6 +36,7 @@ class MainPage(Page):
                 color: #F0F0F0;
                 padding: 0;
                 vertical-align: middle;
+                background-color: rgba(0, 0, 0, 0)
             }
         """
         )

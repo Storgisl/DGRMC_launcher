@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QStackedWidget, QPushBu
 from PySide6.QtGui import QMouseEvent, QFontDatabase, QFont
 from PySide6.QtCore import Qt
 from icecream import ic
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pages import (
     RegistrationPage,
@@ -17,7 +16,6 @@ from pages import (
     DownloadPage
 )
 
-
 class Launcher(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -27,7 +25,7 @@ class Launcher(QMainWindow):
         self.check_download_status()
         self.signals_setup()
         self.drag_position = None
-
+    
     def signals_setup(self):
         self.home_page.go_to_account.connect(self.show_account_page)
         self.account_page.go_to_reg.connect(self.show_registration_page)
@@ -36,7 +34,7 @@ class Launcher(QMainWindow):
         self.registration_page.go_to_login.connect(self.show_login_page)
         self.registration_page.registration_complete.connect(self.show_download_page)
         self.login_page.go_to_reg.connect(self.show_registration_page)
-        self.download_page.download_complete.connect(self.show_main_page)
+        self.download_page.download_complete.connect(self.show_main_page) # download_complete после загрузки всего
         self.main_page.to_settings.connect(self.show_launcher_settings_page)
         self.launcher_settings_page.to_game_settings.connect(
             self.show_game_settings_page
@@ -47,13 +45,13 @@ class Launcher(QMainWindow):
             self.show_launcher_settings_page
         )
         self.game_settings_page.go_back.connect(self.show_main_page)
-
+    
     def setupWindow(self) -> None:
         self.setWindowTitle("Danga Launcher")
-        self.setFixedSize(1000, 629)
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-
+        self.setFixedSize(1000, 629)  # Устанавливаем фиксированный размер окна
+        self.setWindowFlags(Qt.FramelessWindowHint)  # Убираем стандартную оконтовку
+        self.setAttribute(Qt.WA_TranslucentBackground)  # Делаем фон прозрачным
+    
     def setupWidgets(self) -> None:
         bold_font_id = QFontDatabase.addApplicationFont("assets/Heebo-Bold.ttf")
         if bold_font_id == -1:
@@ -170,7 +168,7 @@ class Launcher(QMainWindow):
         
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
-
+        
         # Содержимое окна
         self.stacked_widget = QStackedWidget()
         self.home_page = HomePage(self.stacked_widget)
@@ -193,7 +191,7 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.game_settings_page)
         self.setCentralWidget(self.stacked_widget)
         self.stacked_widget.setCurrentWidget(self.home_page)
-
+        
         content_layout.addWidget(self.stacked_widget)
         content_frame.setLayout(content_layout)
         
@@ -226,7 +224,7 @@ class Launcher(QMainWindow):
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.drag_position = None
         event.accept()
-
+    
     def check_user_status(self) -> None:
         try:
             if self.registration_page.user_status() is True:
@@ -236,7 +234,7 @@ class Launcher(QMainWindow):
         except Exception as e:
             print(f"Error: {e}")
             self.show_home_page()
-
+    
     def check_download_status(self) -> None:
         try:
             if self.download_page.download_status() is True:
@@ -248,39 +246,39 @@ class Launcher(QMainWindow):
                     self.show_home_page()
         except Exception as e:
             print(f"Error: {e}")
-
+    
     def show_registration_page(self):
         ic("reg")
         self.stacked_widget.setCurrentWidget(self.registration_page)
-
+    
     def show_download_page(self):
         ic("download")
         self.stacked_widget.setCurrentWidget(self.download_page)
-
+    
     def show_home_page(self) -> None:
         ic("home")
         self.stacked_widget.setCurrentWidget(self.home_page)
-
+    
     def show_account_page(self):
         ic("acc")
         self.stacked_widget.setCurrentWidget(self.account_page)
-
+    
     def show_login_page(self):
         ic("login")
         self.stacked_widget.setCurrentWidget(self.login_page)
-
+    
     def show_main_page(self):
         ic("main")
         self.stacked_widget.setCurrentWidget(self.main_page)
-
+    
     def show_launcher_settings_page(self):
         ic("launcher settings")
         self.stacked_widget.setCurrentWidget(self.launcher_settings_page)
-
+    
     def show_game_settings_page(self):
         ic("game settings")
         self.stacked_widget.setCurrentWidget(self.game_settings_page)
-
+    
     def clear_frames(self) -> None:
         ic("clear")
         self.home_page.hide()
@@ -291,13 +289,11 @@ class Launcher(QMainWindow):
         self.launcher_settings_page.hide()
         self.game_settings_page.hide()
 
-
 def main():
     app = QApplication(sys.argv)
     launcher = Launcher()
     launcher.show()
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()
