@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QFrame,
     QSpacerItem,
-    QSizePolicy
+    QSizePolicy,
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
@@ -227,26 +227,39 @@ class RegistrationPage(Page):
 
         if username and password:
             print(f"Регистрация прошла успешно: {username}")
-            self.user_data = {"username": username, "password": password}
+
+            user_data = self.data_manip.load_user_data(
+                directory=self.config_dir, json_file=self.user_data_json
+            )
+
+            # Update the structure with the new format
+            if not isinstance(user_data, dict):
+                user_data = {}
+            user_data[username] = {"password": password}
+
             self.data_manip.save_user_data(
-                new_data=self.user_data,
+                new_data=user_data,
                 directory=self.config_dir,
                 json_file=self.user_data_json,
             )
+
             self.registration_complete.emit()
         else:
             self.show_error("Заполните все поля.")
 
     def user_status(self) -> bool:
-        self.user_data = self.data_manip.load_user_data(
+        user_data = self.data_manip.load_user_data(
             directory=self.config_dir, json_file=self.user_data_json
         )
-        self.username_var = self.user_data.get("username", "")
-        self.password_var = self.user_data.get("password", "")
-        if self.username_var not in ("", None) and self.password_var not in ("", None):
-            return True
-        else:
-            return False
+
+        if isinstance(user_data, dict):
+            for username, details in user_data.items():
+                if isinstance(details, dict) and "password" in details:
+                    self.username_var = username
+                    self.password_var = details["password"]
+                    return True
+
+        return False
 
     def show_error(self, message: str) -> None:
         if not self.error_label:

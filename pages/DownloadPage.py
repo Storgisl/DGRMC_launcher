@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QSpacerItem,
     QSizePolicy,
-    QHBoxLayout
+    QHBoxLayout,
 )
 from PySide6.QtGui import QPixmap, QMovie
 from PySide6.QtCore import Signal, Qt
@@ -23,18 +23,19 @@ from icecream import ic
 from pathlib import Path
 from .Page import Page
 
+
 class DownloadPage(Page):
     set_status_signal = Signal(str)
     set_progress_signal = Signal(int)
     set_max_signal = Signal(int)
     download_complete = Signal()
-    
+
     def __init__(self, stacked_widget):
         super().__init__()
         self.setObjectName("download_page")
         self.stacked_widget = stacked_widget
         self.init_ui()
-        
+
     def init_ui(self):
         # Navbar
         navbar_layout = QHBoxLayout()
@@ -75,9 +76,7 @@ class DownloadPage(Page):
         """
         )
         self.frame_layout = QVBoxLayout()
-        self.frame_layout.setAlignment(
-            Qt.AlignTop
-        )
+        self.frame_layout.setAlignment(Qt.AlignTop)
         self.frame_layout.setSpacing(10)
 
         text_image_label = QLabel(self)
@@ -86,7 +85,7 @@ class DownloadPage(Page):
         self.frame_layout.addWidget(
             text_image_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
-        
+
         top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.frame_layout.addItem(top_spacer)
 
@@ -102,7 +101,7 @@ class DownloadPage(Page):
         )
         self.label.setFont(self.light_font)
         self.frame_layout.addWidget(self.label, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        
+
         self.choose_dir_button = QPushButton("Choose", self)
         self.choose_dir_button.setStyleSheet(
             """
@@ -127,7 +126,7 @@ class DownloadPage(Page):
         self.frame_layout.addWidget(
             self.choose_dir_button, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
-        
+
         frame.setLayout(self.frame_layout)
         main_layout.addWidget(frame, alignment=Qt.AlignCenter)
         layout = QVBoxLayout()
@@ -138,7 +137,7 @@ class DownloadPage(Page):
         layout.addStretch()
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
-        
+
     def choose_directory(self) -> None:
         mc_dir = QFileDialog.getExistingDirectory(self, "Choose Minecraft Directory")
         if mc_dir:
@@ -147,7 +146,7 @@ class DownloadPage(Page):
             self.data_manip.save_user_data(
                 new_data={"mc_dir": mc_dir},
                 directory=self.config_dir,
-                json_file=self.user_data_json,
+                json_file=self.user_options_json,
             )
 
             self.frame_layout.removeWidget(self.choose_dir_button)
@@ -181,54 +180,25 @@ class DownloadPage(Page):
             )
         else:
             print("No directory chosen!")
-    
-    def check_dirs(self, directory: str, folders: list) -> bool:
-        try:
-            contents = os.listdir(directory)
-            for folder in folders:
-                if folder not in contents:
-                    ic(f"folder '{folder}' is missing")
-                    return False
-            return True
-        except FileNotFoundError:
-            print(f"Directory '{directory}' not found.")
-            return False
-    
-    def download_status(self) -> bool:
-        dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
-        required_folders = ["assets", "libraries", "runtime", "versions"]
-        if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
-            ic(dgrmc_dir)
-            return True
-        else:
-            if (
-                dgrmc_dir is False
-                and self.username_var not in ("", None)
-                and self.password_var not in ("", None)
-            ):
-                return True
-            else:
-                ic(
-                    f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}"
-                )
-                return False
-    
+
     def start_installation(self) -> None:
         self.frame_layout.removeWidget(self.install_mc_button)
         self.install_mc_button.deleteLater()
 
         self.label.setText("Starting installation...")
-        
+
         self.loading_gif_label = QLabel(self)
         self.loading_gif = QMovie("assets/loading2-40.gif")
         self.loading_gif_label.setMovie(self.loading_gif)
         self.loading_gif_label.setFixedSize(40, 40)
         self.loading_gif.start()
-        self.frame_layout.addWidget(self.loading_gif_label, alignment=Qt.AlignTop | Qt.AlignHCenter)
-        
+        self.frame_layout.addWidget(
+            self.loading_gif_label, alignment=Qt.AlignTop | Qt.AlignHCenter
+        )
+
         thread = threading.Thread(target=self.install_mc, daemon=True)
         thread.start()
-    
+
     def install_forge(self) -> None:
         self.label.setText("Intalling Minecraft...")
 
@@ -251,7 +221,7 @@ class DownloadPage(Page):
             print(f"Forge {forge_version} can't be installed automatically.")
             mc_lib.forge.run_forge_installer(version=forge_version)
         self.set_status_signal.emit("Installation completed successfully!")
-    
+
     def unzip_and_merge(self, zip_path: Path, target_dir: Path) -> None:
         try:
             target_dir.mkdir(parents=True, exist_ok=True)
@@ -278,12 +248,13 @@ class DownloadPage(Page):
             print(f"Extracted and merged contents of {zip_path.name} into {target_dir}")
         except Exception as e:
             print(f"Error during extraction and merge: {e}")
-    
+
     def install_neccesary_files(self) -> None:
         self.label.setText("Configuring Things...")
 
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         base_url = "https://github.com/Storgisl/dg_files/releases/download/v1.0/"
+
         def download_file(url: str, file_path: Path) -> None:
             response = requests.get(url, stream=True)
             if response.status_code == 200:
@@ -300,7 +271,7 @@ class DownloadPage(Page):
                 print(f"{file_path.name} downloaded successfully!")
             else:
                 print(f"Failed to download {file_path.name}")
-        
+
         def install_mods() -> None:
             self.label.setText("Installing Mods...")
 
@@ -312,7 +283,7 @@ class DownloadPage(Page):
             ic("Mods installed")
             self.set_status_signal.emit("Installation completed successfully!")
             self.restart_launcher()
-        
+
         def install_rpacks() -> None:
             self.label.setText("Installing Resource packs...")
 
@@ -324,7 +295,7 @@ class DownloadPage(Page):
                 zip_path=file_path, target_dir=Path(mc_dir) / "resourcepacks"
             )
             ic("Rpacks installed")
-        
+
         def install_emotes() -> None:
             self.label.setText("Installing Emote packs...")
 
@@ -334,7 +305,7 @@ class DownloadPage(Page):
             ic("Emotes downloaded")
             self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "emotes")
             ic("Emotes installed")
-        
+
         try:
             install_emotes()
         except Exception as e:
@@ -347,7 +318,7 @@ class DownloadPage(Page):
             install_mods()
         except Exception as e:
             print(f"error: {e}")
-    
+
     def install_mc(self) -> None:
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         os.makedirs(mc_dir, exist_ok=True)
@@ -368,14 +339,4 @@ class DownloadPage(Page):
                     self.set_status_signal.emit(
                         "Installation failed after multiple attempts. Please try again."
                     )
-
-    # Рестарт лаунчера по оканчании загрузки
-    def restart_launcher(self):
-        # self.label.setText("Configuring Files...")
-        # time.sleep(120)
-        self.label.setText("Restarting...")
-        time.sleep(5)
-        # python = sys.executable
-        # args = [python] + sys.argv
-        # subprocess.Popen(args)
-        # sys.exit()
+            self.download_complete.emit()

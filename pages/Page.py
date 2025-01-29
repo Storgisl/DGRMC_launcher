@@ -7,9 +7,10 @@ from PySide6.QtCore import Signal, Qt, QRectF
 from icecream import ic
 from manip_data import DataManip
 
+
 class Page(QWidget):
     settings_clicked = Signal()
-    
+
     def __init__(self):
         super().__init__()
         self.background_image = QPixmap("assets/Back.png")
@@ -22,39 +23,43 @@ class Page(QWidget):
             self.config_dir = os.path.expanduser("~/.dgrmc_launcher")
         os.makedirs(self.config_dir, exist_ok=True)
         self.user_data_json = "user_data.json"
+        self.user_options_json = "user_options.json"
         self.user_data = self.data_manip.load_user_data(
             directory=self.config_dir, json_file=self.user_data_json
         )
-        self.username_var = self.user_data.get("username", "")
-        self.password_var = self.user_data.get("password", "")
-        self.mc_dir = self.user_data.get("mc_dir", "")
+        self.user_options = self.data_manip.load_user_data(
+            directory=self.config_dir, json_file=self.user_data_json
+        )
+        self.username_var = None
+        self.password_var = None
+        self.mc_dir = self.user_options.get("mc_dir", "")
         self.error_label = QLabel()
         self.error_label.setStyleSheet("color: red;")
         self.uuid_var = ""
         self.token_var = ""
         self.initUI()
-    
+
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         # Создаем маску с закругленными углами
         path = QPainterPath()
         rect = QRectF(self.rect())
         path.addRoundedRect(rect, 8, 8)  # Закругляем углы на 8px
-        
+
         # Ограничиваем область рисования маской
         painter.setClipPath(path)
-        
+
         # Рисуем фоновую картинку
         scaled_image = self.background_image.scaled(
             self.size(), Qt.KeepAspectRatioByExpanding
         )
         painter.drawPixmap(0, 0, scaled_image)
-        
+
         # Убираем маску для последующих рисований
         painter.setClipping(False)
-    
+
     def initUI(self):
         self.regular_font_id = QFontDatabase.addApplicationFont(
             "assets/Heebo-Regular.ttf"
@@ -92,7 +97,7 @@ class Page(QWidget):
         self.extra_light_font = QFont(
             QFontDatabase.applicationFontFamilies(self.extra_light_font_id)[0]
         )
-        
+
         # Footer
         self.footer_layout = QHBoxLayout()
         self.footer_layout.setContentsMargins(40, 0, 40, 0)
@@ -108,7 +113,39 @@ class Page(QWidget):
         )
         self.made_by_label.setFont(self.extra_light_font)
         self.footer_layout.addWidget(self.made_by_label, alignment=Qt.AlignCenter)
-    
+
+    def download_status(self) -> bool:
+        dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
+        required_folders = ["assets", "libraries", "runtime", "versions", "emotes"]
+        if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
+            ic(dgrmc_dir)
+            return True
+        else:
+            if (
+                dgrmc_dir is False
+                and self.username_var not in ("", None)
+                and self.password_var not in ("", None)
+            ):
+                return True
+            else:
+                ic(
+                    f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}"
+                )
+                return False
+
+    def check_dirs(self, directory: str, folders: list) -> bool:
+        try:
+            contents = os.listdir(directory)
+            for folder in folders:
+                if folder not in contents:
+                    ic(f"folder '{folder}' is missing")
+                    return False
+            return True
+        except FileNotFoundError:
+            print(f"Directory '{directory}' not found.")
+            return False
+
     def emit_signal(self):
         ic("settings button clicked")
         self.settings_clicked.emit()
+
