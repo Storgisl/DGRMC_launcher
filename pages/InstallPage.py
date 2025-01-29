@@ -248,13 +248,23 @@ class InstallPage(Page):
                         if chunk:
                             file.write(chunk)
                             downloaded_size += len(chunk)
-                            self.set_progress_signal.emit(
-                                int((downloaded_size / total_size) * 100)
-                            )
+                            if total_size > 0:  # If content-length is available
+                                progress = int((downloaded_size / total_size) * 100)
+                            else:  # When content-length is not available
+                                progress = -1  # Indicate unknown progress
+
+                            self.progress_bar.setValue(
+                                progress
+                            )  # self.set_progress_signal.emit(progress)
+
+                if total_size > 0 and downloaded_size < total_size:
+                    raise Exception(f"Incomplete download: {file_path.name}")
 
                 print(f"{file_path.name} downloaded successfully!")
             else:
-                print(f"Failed to download {file_path.name}")
+                raise Exception(
+                    f"Failed to download {file_path.name} with status code {response.status_code}"
+                )
 
         def install_mods() -> None:
             url = base_url + "mods.zip"
@@ -300,6 +310,7 @@ class InstallPage(Page):
             try:
                 self.install_forge()
                 self.install_neccesary_files()
+
             except Exception as e:
                 print(f"Error during installation attempt {attempt + 1}: {e}")
                 self.set_status_signal.emit(
@@ -322,5 +333,4 @@ class InstallPage(Page):
         self.progress_bar.setMaximum(new_max)
 
     def on_download_complete(self):
-        # Можно добавить дополнительные действия после завершения установки
         print("Installation complete!")
