@@ -1,19 +1,20 @@
 import platform
 import os
 import sys
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame
-from PySide6.QtGui import QFont, QFontDatabase, QPixmap
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout
+from PySide6.QtGui import QFont, QFontDatabase, QPixmap, QPainter, QPainterPath
+from PySide6.QtCore import Signal, Qt, QRectF
 from icecream import ic
-
 from manip_data import DataManip
-
 
 class Page(QWidget):
     settings_clicked = Signal()
-
+    
     def __init__(self):
         super().__init__()
+        self.background_image = QPixmap("assets/Back.png")
+        if not self.background_image or self.background_image.isNull():
+            print("Ошибка: Изображение back.png не найдено или повреждено")
         self.data_manip = DataManip()
         if platform.system() == "Windows":
             self.config_dir = os.path.join(os.getenv("LOCALAPPDATA"), "DGRMC_Launcher")
@@ -32,7 +33,28 @@ class Page(QWidget):
         self.uuid_var = ""
         self.token_var = ""
         self.initUI()
-
+    
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Создаем маску с закругленными углами
+        path = QPainterPath()
+        rect = QRectF(self.rect())
+        path.addRoundedRect(rect, 8, 8)  # Закругляем углы на 8px
+        
+        # Ограничиваем область рисования маской
+        painter.setClipPath(path)
+        
+        # Рисуем фоновую картинку
+        scaled_image = self.background_image.scaled(
+            self.size(), Qt.KeepAspectRatioByExpanding
+        )
+        painter.drawPixmap(0, 0, scaled_image)
+        
+        # Убираем маску для последующих рисований
+        painter.setClipping(False)
+    
     def initUI(self):
         self.regular_font_id = QFontDatabase.addApplicationFont(
             "assets/Heebo-Regular.ttf"
@@ -70,6 +92,7 @@ class Page(QWidget):
         self.extra_light_font = QFont(
             QFontDatabase.applicationFontFamilies(self.extra_light_font_id)[0]
         )
+        
         # Footer
         self.footer_layout = QHBoxLayout()
         self.footer_layout.setContentsMargins(40, 0, 40, 0)
@@ -85,7 +108,7 @@ class Page(QWidget):
         )
         self.made_by_label.setFont(self.extra_light_font)
         self.footer_layout.addWidget(self.made_by_label, alignment=Qt.AlignCenter)
-
+    
     def emit_signal(self):
         ic("settings button clicked")
         self.settings_clicked.emit()

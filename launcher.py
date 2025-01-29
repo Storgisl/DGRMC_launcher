@@ -1,7 +1,7 @@
 import os
 import sys
-from PySide6.QtWidgets import QMainWindow, QApplication, QStackedWidget
-from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtWidgets import QMainWindow, QApplication, QStackedWidget, QPushButton, QHBoxLayout, QVBoxLayout, QFrame, QSpacerItem, QSizePolicy, QLabel
+from PySide6.QtGui import QMouseEvent, QFontDatabase, QFont
 from PySide6.QtCore import Qt
 from icecream import ic
 
@@ -25,10 +25,8 @@ class Launcher(QMainWindow):
         self.setupWidgets()
         self.check_user_status()
         self.check_download_status()
-        self.background_image = QPixmap("assets/Back.png")
-        if not self.background_image or self.background_image.isNull():
-            print("Ошибка: Изображение back.png не найдено или повреждено")
         self.signals_setup()
+        self.drag_position = None
 
     def signals_setup(self):
         self.home_page.go_to_account.connect(self.show_account_page)
@@ -38,7 +36,7 @@ class Launcher(QMainWindow):
         self.registration_page.go_to_login.connect(self.show_login_page)
         self.registration_page.registration_complete.connect(self.show_download_page)
         self.login_page.go_to_reg.connect(self.show_registration_page)
-        self.download_page.download_complete.connect(self.show_main_page) # download_complete после загрузки всего
+        self.download_page.download_complete.connect(self.show_main_page)
         self.main_page.to_settings.connect(self.show_launcher_settings_page)
         self.launcher_settings_page.to_game_settings.connect(
             self.show_game_settings_page
@@ -52,20 +50,128 @@ class Launcher(QMainWindow):
 
     def setupWindow(self) -> None:
         self.setWindowTitle("Danga Launcher")
-        self.setFixedHeight(600)
-        self.setFixedWidth(1000)
-
-    def paintEvent(self, event) -> None:
-        painter = QPainter(self)
-        try:
-            scaled_image = self.background_image.scaled(
-                self.size(), Qt.KeepAspectRatioByExpanding
-            )
-            painter.drawPixmap(0, 0, scaled_image)
-        finally:
-            painter.end()
+        self.setFixedSize(1000, 629)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
 
     def setupWidgets(self) -> None:
+        bold_font_id = QFontDatabase.addApplicationFont("assets/Heebo-Bold.ttf")
+        if bold_font_id == -1:
+            print("Ошибка: Не удалось загрузить Heebo-Bold.ttf")
+        bold_font = QFont(
+            QFontDatabase.applicationFontFamilies(bold_font_id)[0]
+        )
+
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        
+        # Верхний фрейм с кнопками закрытия и свертывания
+        header_frame = QFrame(self)
+        header_frame.setFixedHeight(24)
+        header_frame.setStyleSheet(
+            """
+            QFrame {
+                background-color: rgba(37, 32, 40, 120);  /* Полупрозрачный цвет */
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+            }
+        """
+        )
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(10, 0, 10, 0)  # Убираем верхние и нижние отступы
+
+        header_layout.addSpacing(470)
+
+        launcherlabel = QLabel("Danga", self)
+        launcherlabel.setStyleSheet(
+            """
+            QLabel {
+                background-color: rgba(0, 0, 0, 0);
+                font-size: 14px;
+                color: rgba(254, 254, 254, 120);
+                font-weight: 700;
+            }
+        """
+        )
+        launcherlabel.setFont(bold_font)
+        header_layout.addWidget(launcherlabel, alignment=Qt.AlignCenter)
+
+        header_layout.addStretch()
+
+        # Кнопка свертывания
+        minimize_button = QPushButton("", self)
+        minimize_button.setStyleSheet(
+            """
+            QPushButton {
+                background-image: url(assets/minimize.png);
+                background-repeat: no-repeat;
+                background-position: left;
+                background-color: transparent;
+                border: none;
+                min-width: 12px;
+                max-width: 12px;
+                min-height: 12px;
+                max-height: 12px;
+            }
+            QPushButton:hover {
+                background-image: url(assets/minimizeHover.png);
+            }
+        """
+        )
+        minimize_button.setCursor(Qt.PointingHandCursor)
+        minimize_button.clicked.connect(self.showMinimized)
+        header_layout.addWidget(minimize_button)
+
+        header_layout.addSpacing(20)
+        
+        # Кнопка закрытия
+        close_button = QPushButton("", self)
+        close_button.setStyleSheet(
+            """
+            QPushButton {
+                background-image: url(assets/close.png);
+                background-repeat: no-repeat;
+                background-position: left;
+                background-color: transparent;
+                border: none;
+                min-width: 12px;
+                max-width: 12px;
+                min-height: 12px;
+                max-height: 12px;
+            }
+            QPushButton:hover {
+                background-image: url(assets/closeHover.png);
+            }
+        """
+        )
+        close_button.setCursor(Qt.PointingHandCursor)
+        close_button.clicked.connect(self.close)
+        header_layout.addWidget(close_button)
+        
+        header_frame.setLayout(header_layout)
+        main_layout.addWidget(header_frame)
+
+        top_spacer = QSpacerItem(0, 5, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        main_layout.addItem(top_spacer)
+        
+        # Фрейм для отображения страниц
+        content_frame = QFrame(self)
+        content_frame.setFixedSize(1000, 600)
+        content_frame.setStyleSheet(
+            """
+            QFrame {
+                background-color: rgba(0, 0, 0, 0);
+                border-bottom-left-radius: 8px;
+                border-bottom-right-radius: 8px;
+            }
+        """
+        )
+        
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Содержимое окна
         self.stacked_widget = QStackedWidget()
         self.home_page = HomePage(self.stacked_widget)
         self.registration_page = RegistrationPage(self.stacked_widget)
@@ -75,10 +181,8 @@ class Launcher(QMainWindow):
         self.main_page = MainPage(self.stacked_widget)
         self.launcher_settings_page = LauncherSettings(self.stacked_widget)
         self.game_settings_page = GameSettings(self.stacked_widget)
-
         ic(self.registration_page.user_status())
         ic(self.download_page.download_status())
-
         self.stacked_widget.addWidget(self.home_page)
         self.stacked_widget.addWidget(self.registration_page)
         self.stacked_widget.addWidget(self.login_page)
@@ -89,6 +193,39 @@ class Launcher(QMainWindow):
         self.stacked_widget.addWidget(self.game_settings_page)
         self.setCentralWidget(self.stacked_widget)
         self.stacked_widget.setCurrentWidget(self.home_page)
+
+        content_layout.addWidget(self.stacked_widget)
+        content_frame.setLayout(content_layout)
+        
+        main_layout.addWidget(content_frame)
+        
+        container = QFrame(self)
+        container.setLayout(main_layout)
+        container.setStyleSheet(
+            """
+            QFrame {
+                border: none;
+                background-color: rgba(0, 0, 0, 0);
+                border-radius: 8px;
+            }
+        """
+        )
+        
+        self.setCentralWidget(container)
+    
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() == Qt.LeftButton and self.drag_position is not None:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+    
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        self.drag_position = None
+        event.accept()
 
     def check_user_status(self) -> None:
         try:
