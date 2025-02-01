@@ -360,7 +360,8 @@ class DownloadPage(Page):
                     self.set_status_signal.emit(
                         "Installation failed after multiple attempts. Please try again."
                     )
-        self.download_complete.emit()
+
+        self.emit_signal(self.download_complete)
 
     def update_status(self, status: str) -> None:
         pass
@@ -370,22 +371,3 @@ class DownloadPage(Page):
 
     def set_progress_max(self, max_value: int) -> None:
         self.progress_bar.setMaximum(max_value)
-
-    def download_status(self) -> bool:
-        dgrmc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
-        required_folders = ["assets", "libraries", "runtime", "versions", "emotes"]
-        if self.check_dirs(directory=dgrmc_dir, folders=required_folders):
-            ic(dgrmc_dir)
-            return True
-        else:
-            if (
-                dgrmc_dir is False
-                and self.username_var not in ("", None)
-                and self.password_var not in ("", None)
-            ):
-                return True
-            else:
-                ic(
-                    f"Missing required folders in {self.username_var, self.password_var,dgrmc_dir}"
-                )
-                return False

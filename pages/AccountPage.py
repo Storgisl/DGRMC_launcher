@@ -4,8 +4,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QFrame,
-    QSpacerItem,
-    QSizePolicy,
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
@@ -15,8 +13,6 @@ from .Page import Page
 
 class AccountPage(Page):
     go_to_reg = Signal()
-    go_to_main_page = Signal()
-    go_to_download_page = Signal()
 
     def __init__(self, stacked_widget):
         super().__init__()
@@ -27,8 +23,6 @@ class AccountPage(Page):
     def init_ui(self):
         self.account_layout = QVBoxLayout()
         self.account_layout.setAlignment(Qt.AlignCenter)
-
-        self.load_accounts()
 
         layout = QVBoxLayout()
         layout.addSpacing(20)
@@ -72,9 +66,9 @@ class AccountPage(Page):
             add_account_button = self.create_add_account_button()
             account_list_layout.addWidget(add_account_button)
 
-            self.account_layout.addLayout(account_list_layout)
+            layout.addLayout(account_list_layout)
         else:
-            self.account_layout.addWidget(self.create_add_account_button())
+            layout.addWidget(self.create_add_account_button())
 
     def create_account_button(self, username):
         account_button = QPushButton(username, self)
@@ -101,7 +95,7 @@ class AccountPage(Page):
         )
         account_button.setCursor(Qt.PointingHandCursor)
         account_button.setFont(self.bold_font)
-        account_button.clicked.connect(lambda: self.login_user(username))
+        account_button.clicked.connect(lambda: self.login_user(username=username))
         return account_button
 
     def create_add_account_button(self):
@@ -123,23 +117,13 @@ class AccountPage(Page):
         """
         )
         add_account_button.setCursor(Qt.PointingHandCursor)
-        add_account_button.clicked.connect(self.add_account)
+        add_account_button.clicked.connect(lambda: self.emit_signal(self.go_to_reg))
         return add_account_button
 
-    def add_account(self):
-        self.go_to_reg.emit()
-
-    def login_user(self, username):
-        self.CURRENT_USER = username
-        if self.download_status():
-            self.go_to_main_page.emit()
-        else:
-            self.go_to_download_page.emit()
-
     def clear_layout(self, layout):
-        while layout.count():
-            item = layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
-                self.clear_layout(item.layout())
+        """Removes all widgets from a layout."""
+        item = layout.takeAt(0)
+        if item.widget():
+            item.widget().deleteLater()
+        elif item.layout():
+            self.clear_layout(item.layout())
