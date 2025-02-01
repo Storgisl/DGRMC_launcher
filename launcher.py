@@ -62,9 +62,9 @@ class Launcher(QMainWindow):
 
     def setupWindow(self) -> None:
         self.setWindowTitle("Danga Launcher")
-        self.setFixedSize(1000, 629)  # Устанавливаем фиксированный размер окна
-        self.setWindowFlags(Qt.FramelessWindowHint)  # Убираем стандартную оконтовку
-        self.setAttribute(Qt.WA_TranslucentBackground)  # Делаем фон прозрачным
+        self.setFixedSize(1000, 629)
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
 
     def setupWidgets(self) -> None:
         bold_font_id = QFontDatabase.addApplicationFont("assets/Heebo-Bold.ttf")
@@ -76,7 +76,6 @@ class Launcher(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        # Верхний фрейм с кнопками закрытия и свертывания
         header_frame = QFrame(self)
         header_frame.setFixedHeight(24)
         header_frame.setStyleSheet(
@@ -91,7 +90,7 @@ class Launcher(QMainWindow):
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(
             10, 0, 10, 0
-        )  # Убираем верхние и нижние отступы
+        )
 
         header_layout.addSpacing(470)
 

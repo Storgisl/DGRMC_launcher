@@ -14,11 +14,10 @@ class HomePage(Page):
         self.init_ui()
 
     def init_ui(self):
-        # Navbar
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(
             40, 0, 40, 0
-        )  # Добавляем отступы слева и справа
+        )
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
@@ -40,9 +39,8 @@ class HomePage(Page):
         navbar_frame.setLayout(navbar_layout)
         navbar_frame.setFixedHeight(44)
 
-        # Центральная часть страницы
         main_layout = QVBoxLayout()
-        main_layout.setAlignment(Qt.AlignCenter)  # Центрируем элементы
+        main_layout.setAlignment(Qt.AlignCenter)
         main_image_label = QLabel(self)
         main_image_pixmap = QPixmap("assets/Main.png")
         main_image_label.setPixmap(main_image_pixmap)

@@ -23,7 +23,7 @@ class MainPage(Page):
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(
             40, 0, 40, 0
-        )  # Добавляем отступы слева и справа
+        )
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
@@ -53,7 +53,7 @@ class MainPage(Page):
         text_image_pixmap = QPixmap("assets/MainPageLogo.png")
         text_image_label.setPixmap(text_image_pixmap)
         main_layout.addWidget(text_image_label, alignment=Qt.AlignCenter)
-        nickname = QLabel(f"Welcome back {self.username_var}", self)
+        nickname = QLabel(f"Welcome back {self.CURRENT_USER}", self)
         nickname.setStyleSheet(
             """
             QLabel {
@@ -121,24 +121,6 @@ class MainPage(Page):
 
     def go_to_settings(self):
         self.to_settings.emit()
-
-    def load_accounts(self):
-        user_data = load_user_data(
-            directory=self.config_dir, json_file=self.user_data_json
-        )
-        accounts = user_data.get("accounts", [])
-        return accounts
-
-    def user_status(self) -> bool:
-        self.user_data = load_user_data(
-            directory=self.config_dir, json_file=self.user_data_json
-        )
-        self.username_var = self.user_data.get("username", "")
-        self.password_var = self.user_data.get("password", "")
-        if self.username_var not in ("", None) and self.password_var not in ("", None):
-            return True
-        else:
-            return False
 
     def run_mc(self, mc_dir: str) -> None:
         def run_minecraft():

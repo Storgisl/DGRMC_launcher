@@ -31,9 +31,12 @@ class AccountPage(Page):
         self.load_accounts()
 
         layout = QVBoxLayout()
+        layout.addSpacing(20)
         layout.addWidget(self.create_navbar())
+        layout.addStretch()
         layout.addLayout(self.account_layout)
         layout.addStretch()
+        layout.addLayout(self.footer_layout)
         self.setLayout(layout)
 
     def create_navbar(self):
@@ -56,10 +59,9 @@ class AccountPage(Page):
         return navbar_frame
 
     def load_accounts(self):
-        """Loads user accounts dynamically from Page's user data."""
         self.clear_layout(self.account_layout)
 
-        users = self.user_data  # Now inherited from Page
+        users = self.user_data
         if users:
             account_list_layout = QHBoxLayout()
             account_list_layout.setAlignment(Qt.AlignCenter)
@@ -67,7 +69,6 @@ class AccountPage(Page):
             for username in users.keys():
                 account_list_layout.addWidget(self.create_account_button(username))
 
-            # Add "Add Account" button
             add_account_button = self.create_add_account_button()
             account_list_layout.addWidget(add_account_button)
 
@@ -76,7 +77,6 @@ class AccountPage(Page):
             self.account_layout.addWidget(self.create_add_account_button())
 
     def create_account_button(self, username):
-        """Creates a button for each account."""
         account_button = QPushButton(username, self)
         account_button.setStyleSheet(
             """
@@ -105,7 +105,6 @@ class AccountPage(Page):
         return account_button
 
     def create_add_account_button(self):
-        """Creates the 'Add Account' button."""
         add_account_button = QPushButton(self)
         add_account_button.setStyleSheet(
             """
@@ -128,18 +127,16 @@ class AccountPage(Page):
         return add_account_button
 
     def add_account(self):
-        """Opens the registration page when adding a new account."""
         self.go_to_reg.emit()
 
     def login_user(self, username):
-        """Handles clicking on an account button."""
+        self.CURRENT_USER = username
         if self.download_status():
             self.go_to_main_page.emit()
         else:
             self.go_to_download_page.emit()
 
     def clear_layout(self, layout):
-        """Removes all widgets from a layout."""
         while layout.count():
             item = layout.takeAt(0)
             if item.widget():

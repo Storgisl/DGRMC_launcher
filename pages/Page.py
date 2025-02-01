@@ -37,27 +37,20 @@ class Page(QWidget):
         self.error_label.setStyleSheet("color: red;")
         self.uuid_var = ""
         self.token_var = ""
+        self.CURRENT_USER = None
         self.initUI()
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-
-        # Создаем маску с закругленными углами
         path = QPainterPath()
         rect = QRectF(self.rect())
-        path.addRoundedRect(rect, 8, 8)  # Закругляем углы на 8px
-
-        # Ограничиваем область рисования маской
+        path.addRoundedRect(rect, 8, 8)
         painter.setClipPath(path)
-
-        # Рисуем фоновую картинку
         scaled_image = self.background_image.scaled(
             self.size(), Qt.KeepAspectRatioByExpanding
         )
         painter.drawPixmap(0, 0, scaled_image)
-
-        # Убираем маску для последующих рисований
         painter.setClipping(False)
 
     def initUI(self):
