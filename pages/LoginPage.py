@@ -68,7 +68,7 @@ class LoginPage(Page):
         )
         sign_up_button.setFont(self.medium_font)
         sign_up_button.setCursor(Qt.PointingHandCursor)
-        sign_up_button.clicked.connect(self.show_sign_up_page)
+        sign_up_button.clicked.connect(lambda: self.emit_signal(self.go_to_reg))
         navbar_layout.addWidget(sign_up_button)
 
         navbar_layout.addStretch()
@@ -227,6 +227,3 @@ class LoginPage(Page):
 
     def handle_login(self) -> None:
         print("login idi nahui")
-
-    def show_sign_up_page(self):
-        self.go_to_reg.emit()

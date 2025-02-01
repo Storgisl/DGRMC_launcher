@@ -2,7 +2,17 @@ import os
 import subprocess
 import threading
 
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QSpacerItem, QSizePolicy, QFrame, QHBoxLayout
+from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QSpacerItem,
+    QSizePolicy,
+    QFrame,
+    QHBoxLayout,
+)
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
 import minecraft_launcher_lib as mc_lib
@@ -53,7 +63,11 @@ class MainPage(Page):
         text_image_pixmap = QPixmap("assets/MainPageLogo.png")
         text_image_label.setPixmap(text_image_pixmap)
         main_layout.addWidget(text_image_label, alignment=Qt.AlignCenter)
-        nickname = QLabel(f"Welcome back {self.username_var}", self)
+
+        def get_cur_user():
+            return f"Welcome back {self.current_username_var}"
+
+        nickname = QLabel(get_cur_user(), self)
         nickname.setStyleSheet(
             """
             QLabel {
@@ -107,7 +121,7 @@ class MainPage(Page):
         )
         settings_button.setFont(self.regular_font)
         settings_button.setCursor(Qt.PointingHandCursor)
-        settings_button.clicked.connect(self.go_to_settings)
+        settings_button.clicked.connect(lambda: self.emit_signal(self.to_settings))
         main_layout.addWidget(settings_button, alignment=Qt.AlignCenter)
 
         layout = QVBoxLayout()
@@ -119,38 +133,16 @@ class MainPage(Page):
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
 
-    def go_to_settings(self):
-        self.to_settings.emit()
-
-    def load_accounts(self):
-        user_data = load_user_data(
-            directory=self.config_dir, json_file=self.user_data_json
-        )
-        accounts = user_data.get("accounts", [])
-        return accounts
-
-    def user_status(self) -> bool:
-        self.user_data = load_user_data(
-            directory=self.config_dir, json_file=self.user_data_json
-        )
-        self.username_var = self.user_data.get("username", "")
-        self.password_var = self.user_data.get("password", "")
-        if self.username_var not in ("", None) and self.password_var not in ("", None):
-            return True
-        else:
-            return False
-
-    def run_mc(self, mc_dir: str) -> None:
+    def run_mc(self) -> None:
         def run_minecraft():
             version = "1.20.1"
             forge_version = mc_lib.forge.find_forge_version(version)
             forge_vers = mc_lib.forge.forge_to_installed_version(forge_version)
-            minecraft_directory = os.path.join(self.mc_dir, "DGRMClauncher")
-            os.makedirs(minecraft_directory, exist_ok=True)
+            minecraft_directory = str(Path(self.mc_dir) / "DGRMClauncher")
             command = mc_lib.command.get_minecraft_command(
                 version=forge_vers,
                 minecraft_directory=minecraft_directory,
-                options=self.user_data,
+                options=self.user_options,
             )
             try:
                 subprocess.call(command)

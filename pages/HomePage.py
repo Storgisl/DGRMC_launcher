@@ -75,7 +75,7 @@ class HomePage(Page):
         )
         start_button.setFont(self.bold_font)
         start_button.setCursor(Qt.PointingHandCursor)
-        start_button.clicked.connect(self.go_to_account_page)
+        start_button.clicked.connect(lambda: self.emit_signal(self.go_to_account))
         main_layout.addWidget(start_button, alignment=Qt.AlignCenter)
         layout = QVBoxLayout()
         layout.addSpacing(20)
@@ -85,6 +85,3 @@ class HomePage(Page):
         layout.addStretch()
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
-
-    def go_to_account_page(self):
-        self.go_to_account.emit()

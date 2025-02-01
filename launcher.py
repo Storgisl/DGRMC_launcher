@@ -264,33 +264,49 @@ class Launcher(QMainWindow):
     def show_registration_page(self):
         ic("reg")
         self.stacked_widget.setCurrentWidget(self.registration_page)
+        self.stacked_widget.addWidget(self.registration_page)
+        self.stacked_widget.setCurrentWidget(self.registration_page)
 
     def show_download_page(self):
         ic("download")
+        self.stacked_widget.setCurrentWidget(self.download_page)
+        self.stacked_widget.addWidget(self.download_page)
         self.stacked_widget.setCurrentWidget(self.download_page)
 
     def show_home_page(self) -> None:
         ic("home")
         self.stacked_widget.setCurrentWidget(self.home_page)
+        self.stacked_widget.addWidget(self.home_page)
+        self.stacked_widget.setCurrentWidget(self.home_page)
 
     def show_account_page(self):
         ic("acc")
+        self.stacked_widget.setCurrentWidget(self.account_page)
+        self.stacked_widget.addWidget(self.account_page)
         self.stacked_widget.setCurrentWidget(self.account_page)
 
     def show_login_page(self):
         ic("login")
         self.stacked_widget.setCurrentWidget(self.login_page)
+        self.stacked_widget.addWidget(self.login_page)
+        self.stacked_widget.setCurrentWidget(self.login_page)
 
     def show_main_page(self):
         ic("main")
+        self.main_page = MainPage(self.stacked_widget)
+        self.stacked_widget.addWidget(self.main_page)
         self.stacked_widget.setCurrentWidget(self.main_page)
 
     def show_launcher_settings_page(self):
         ic("launcher settings")
         self.stacked_widget.setCurrentWidget(self.launcher_settings_page)
+        self.stacked_widget.addWidget(self.launcher_settings_page)
+        self.stacked_widget.setCurrentWidget(self.launcher_settings_page)
 
     def show_game_settings_page(self):
         ic("game settings")
+        self.stacked_widget.setCurrentWidget(self.game_settings_page)
+        self.stacked_widget.addWidget(self.game_settings_page)
         self.stacked_widget.setCurrentWidget(self.game_settings_page)
 
     def clear_frames(self) -> None:
@@ -313,4 +329,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

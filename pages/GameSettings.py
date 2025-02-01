@@ -1,7 +1,7 @@
-import sys
-import os
 import shutil
 import psutil
+
+from pathlib import Path
 
 from PySide6.QtWidgets import (
     QLabel,
@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt, Signal
+from icecream import ic
 
 from .Page import Page
 
@@ -30,6 +31,9 @@ class GameSettings(Page):
         super().__init__()
         self.setObjectName("game_settings_page")
         self.stacked_widget = stacked_widget
+        self.ram_value = None
+        self.heigth = None
+        self.width = None
         self.init_ui()
 
     def init_ui(self):
@@ -58,7 +62,9 @@ class GameSettings(Page):
         """
         )
         sign_in_button.setFont(self.medium_font)
-        sign_in_button.clicked.connect(self.show_launcher_settings_page)
+        sign_in_button.clicked.connect(
+            lambda: self.emit_signal(self.to_launcher_settings)
+        )
         sign_in_button.setCursor(Qt.PointingHandCursor)
         navbar_layout.addWidget(sign_in_button)
 
@@ -150,7 +156,7 @@ class GameSettings(Page):
         back_button.setCursor(Qt.PointingHandCursor)
         back_button.setText("back")
         back_button.setFont(self.extra_light_font)
-        back_button.clicked.connect(self.go_back_to_main)
+        back_button.clicked.connect(lambda: self.emit_signal(self.go_back))
 
         inner_navbar_layout.addWidget(back_button)
 
@@ -510,24 +516,47 @@ class GameSettings(Page):
     def update_slider_value(self):
         try:
             new_value = int(self.value_line.text())
+            ic(new_value)
             if new_value < self.memory_slider.minimum():
                 new_value = self.memory_slider.minimum()
             elif new_value > self.memory_slider.maximum():
                 new_value = self.memory_slider.maximum()
             self.memory_slider.setValue(new_value)
-            self.value_line.setPlaceholderText(f"{str(new_value)} MiB")
+            self.value_line.setText(f"{str(new_value)} MiB")
         except ValueError:
             self.value_line.setText("")
-            self.value_line.setPlaceholderText(f"{str(self.memory_slider.value())} MiB")
+            self.value_line.setText(f"{str(self.memory_slider.value())} MiB")
 
-    def generate_jvm_arguments(self):
-        print("generate_jvm_arguments")
-        pass
+    def generate_jvm_arguments(self, ram_value: str) -> None:
+        self.ram_value = int(ram_value)
+        self.data_manip.save_user_data(
+            new_data={
+                "jvmArguments": [
+                    f"-Xms{self.ram_value // 2}M",
+                    f"-Xmx{self.ram_value}M",
+                ]
+            },
+            directory=self.config_dir,
+            json_file=self.user_options_json,
+        )
+
+    def set_resolution(self, height: str, width: str) -> None:
+        self.width = width
+        self.height = height
+        self.data_manip.save_user_data(
+            new_data={
+                "customResolution": True,
+                "resolutionWidth": self.width,
+                "resolutionHeight": self.height,
+            },
+            directory=self.config_dir,
+            json_file=self.user_options_json,
+        )
 
     def delete_mc(self):
         if self.delete_line.text().lower() == "delete":
             try:
-                shutil.rmtree(os.path.join(self.mc_dir, "DGRMClauncher"))
+                shutil.rmtree(str(Path(self.mc_dir), "DGRMClauncher"))
                 self.delete_complete.emit()
             except Exception as e:
                 print(f"Error: {e}")
@@ -540,9 +569,3 @@ class GameSettings(Page):
             print("Checkbox is checked")
         else:
             print("Checkbox is unchecked")
-
-    def show_launcher_settings_page(self):
-        self.to_launcher_settings.emit()
-
-    def go_back_to_main(self):
-        self.go_back.emit()

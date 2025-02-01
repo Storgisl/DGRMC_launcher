@@ -339,4 +339,4 @@ class DownloadPage(Page):
                     self.set_status_signal.emit(
                         "Installation failed after multiple attempts. Please try again."
                     )
-            self.download_complete.emit()
+            self.emit_signal(self.download_complete)

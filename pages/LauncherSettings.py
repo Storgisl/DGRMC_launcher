@@ -69,7 +69,7 @@ class LauncherSettings(Page):
         )
         sign_up_button.setFont(self.medium_font)
         sign_up_button.setCursor(Qt.PointingHandCursor)
-        sign_up_button.clicked.connect(self.show_game_settings_page)
+        sign_up_button.clicked.connect(lambda: self.emit_signal(self.to_game_settings))
         navbar_settings_layout.addWidget(sign_up_button)
 
         navbar_settings_layout.addStretch()
@@ -136,7 +136,7 @@ class LauncherSettings(Page):
         back_button.setCursor(Qt.PointingHandCursor)
         back_button.setText("back")
         back_button.setFont(self.extra_light_font)
-        back_button.clicked.connect(self.go_back_to_main)
+        back_button.clicked.connect(lambda: self.emit_signal(self.go_back))
         inner_navbar_settings_layout.addWidget(back_button)
         frame_layout.addLayout(inner_navbar_settings_layout)
 
@@ -175,7 +175,7 @@ class LauncherSettings(Page):
         )
         change_button.setFont(self.regular_font)
         change_button.setCursor(Qt.PointingHandCursor)
-        change_button.clicked.connect(self.go_to_account)
+        change_button.clicked.connect(lambda: self.emit_signal(self.to_account))
         frame_layout.addWidget(change_button, alignment=Qt.AlignCenter)
         top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         frame_layout.addItem(top_spacer)
@@ -263,15 +263,6 @@ class LauncherSettings(Page):
         layout.addStretch()
         layout.addLayout(self.footer_layout)
         self.setLayout(layout)
-
-    def show_game_settings_page(self) -> None:
-        self.to_game_settings.emit()
-
-    def go_to_account(self) -> None:
-        self.to_account.emit()
-
-    def go_back_to_main(self) -> None:
-        self.go_back.emit()
 
     def check_updates(self) -> None:
         pass
