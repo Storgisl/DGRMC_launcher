@@ -33,7 +33,7 @@ class MainPage(Page):
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(
             40, 0, 40, 0
-        )  # Добавляем отступы слева и справа
+        )
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
@@ -68,6 +68,7 @@ class MainPage(Page):
             return f"Welcome back {self.current_username_var}"
 
         nickname = QLabel(get_cur_user(), self)
+
         nickname.setStyleSheet(
             """
             QLabel {

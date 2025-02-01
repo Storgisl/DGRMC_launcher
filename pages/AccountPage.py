@@ -25,10 +25,12 @@ class AccountPage(Page):
         self.account_layout.setAlignment(Qt.AlignCenter)
 
         layout = QVBoxLayout()
+        layout.addSpacing(20)
         layout.addWidget(self.create_navbar())
+        layout.addStretch()
         layout.addLayout(self.account_layout)
         layout.addStretch()
-        self.load_accounts(layout)
+        layout.addLayout(self.footer_layout)
         self.setLayout(layout)
 
     def create_navbar(self):
@@ -50,8 +52,8 @@ class AccountPage(Page):
         navbar_frame.setFixedHeight(44)
         return navbar_frame
 
-    def load_accounts(self, layout):
-        self.clear_layout(layout)
+    def load_accounts(self):
+        self.clear_layout(self.account_layout)
 
         users = self.user_data
         if users:

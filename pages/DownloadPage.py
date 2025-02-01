@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QHBoxLayout,
+    QProgressBar
 )
 from PySide6.QtGui import QPixmap, QMovie
 from PySide6.QtCore import Signal, Qt
@@ -34,14 +35,16 @@ class DownloadPage(Page):
         super().__init__()
         self.setObjectName("download_page")
         self.stacked_widget = stacked_widget
+        self.set_status_signal.connect(self.update_status)
+        self.set_progress_signal.connect(self.update_progress)
+        self.set_max_signal.connect(self.set_progress_max)
         self.init_ui()
 
     def init_ui(self):
-        # Navbar
         navbar_layout = QHBoxLayout()
         navbar_layout.setContentsMargins(
             40, 0, 40, 0
-        )  # Добавляем отступы слева и справа
+        )
         logo_label = QLabel(self)
         logo_pixmap = QPixmap("assets/Logo.png")
         logo_label.setPixmap(logo_pixmap)
@@ -86,7 +89,7 @@ class DownloadPage(Page):
             text_image_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
 
-        top_spacer = QSpacerItem(0, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        top_spacer = QSpacerItem(0, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.frame_layout.addItem(top_spacer)
 
         self.label = QLabel("Please, choose installation folder", self)
@@ -196,12 +199,32 @@ class DownloadPage(Page):
             self.loading_gif_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
 
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setFixedSize(385, 5)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: none;
+                border-radius: 5px;
+                text-align: center;
+                background-color: #503684;
+                color: rgba(0, 0, 0, 0);
+            }
+            QProgressBar::chunk {
+                background-color: #7247CB;
+                border: none;
+                border-radius: 5px;
+            }
+        """)
+        self.frame_layout.addWidget(
+            self.progress_bar, alignment=Qt.AlignTop | Qt.AlignHCenter
+        )
+
         thread = threading.Thread(target=self.install_mc, daemon=True)
         thread.start()
 
     def install_forge(self) -> None:
-        self.label.setText("Intalling Minecraft...")
-
+        self.label.setText("Installing Minecraft...")
         version = "1.20.1"
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         forge_version = mc_lib.forge.find_forge_version(version)
@@ -220,7 +243,7 @@ class DownloadPage(Page):
         else:
             print(f"Forge {forge_version} can't be installed automatically.")
             mc_lib.forge.run_forge_installer(version=forge_version)
-        self.set_status_signal.emit("Installation completed successfully!")
+        self.set_status_signal.emit("Forge installation completed successfully!")
 
     def unzip_and_merge(self, zip_path: Path, target_dir: Path) -> None:
         try:
@@ -249,9 +272,8 @@ class DownloadPage(Page):
         except Exception as e:
             print(f"Error during extraction and merge: {e}")
 
-    def install_neccesary_files(self) -> None:
+    def install_necessary_files(self) -> None:
         self.label.setText("Configuring Things...")
-
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
         base_url = "https://github.com/Storgisl/dg_files/releases/download/v1.0/"
 
@@ -274,19 +296,16 @@ class DownloadPage(Page):
 
         def install_mods() -> None:
             self.label.setText("Installing Mods...")
-
             url = base_url + "mods.zip"
             file_path = Path(mc_dir) / "mods.zip"
             download_file(url=url, file_path=file_path)
             ic("Mods downloaded")
             self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "mods")
             ic("Mods installed")
-            self.set_status_signal.emit("Installation completed successfully!")
-            self.restart_launcher()
+            self.set_status_signal.emit("Mods installation completed successfully!")
 
         def install_rpacks() -> None:
             self.label.setText("Installing Resource packs...")
-
             url = base_url + "resourcepacks.zip"
             file_path = Path(mc_dir) / "resourcepacks.zip"
             download_file(url=url, file_path=file_path)
@@ -295,29 +314,30 @@ class DownloadPage(Page):
                 zip_path=file_path, target_dir=Path(mc_dir) / "resourcepacks"
             )
             ic("Rpacks installed")
+            self.set_status_signal.emit("Resource packs installation completed successfully!")
 
         def install_emotes() -> None:
             self.label.setText("Installing Emote packs...")
-
             url = base_url + "emotes.zip"
             file_path = Path(mc_dir) / "emotes.zip"
             download_file(url=url, file_path=file_path)
             ic("Emotes downloaded")
             self.unzip_and_merge(zip_path=file_path, target_dir=Path(mc_dir) / "emotes")
             ic("Emotes installed")
+            self.set_status_signal.emit("Emotes installation completed successfully!")
 
         try:
             install_emotes()
         except Exception as e:
-            print(f"error: {e}")
+            print(f"Error installing emotes: {e}")
         try:
             install_rpacks()
         except Exception as e:
-            print(f"error: {e}")
+            print(f"Error installing resource packs: {e}")
         try:
             install_mods()
         except Exception as e:
-            print(f"error: {e}")
+            print(f"Error installing mods: {e}")
 
     def install_mc(self) -> None:
         mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
@@ -327,7 +347,8 @@ class DownloadPage(Page):
         for attempt in range(max_retries):
             try:
                 self.install_forge()
-                self.install_neccesary_files()
+                self.install_necessary_files()
+                break  # Если установка успешна, выходим из цикла
             except Exception as e:
                 print(f"Error during installation attempt {attempt + 1}: {e}")
                 self.set_status_signal.emit(
@@ -339,4 +360,14 @@ class DownloadPage(Page):
                     self.set_status_signal.emit(
                         "Installation failed after multiple attempts. Please try again."
                     )
-            self.emit_signal(self.download_complete)
+
+        self.emit_signal(self.download_complete)
+
+    def update_status(self, status: str) -> None:
+        pass
+
+    def update_progress(self, progress: int) -> None:
+        self.progress_bar.setValue(progress)
+
+    def set_progress_max(self, max_value: int) -> None:
+        self.progress_bar.setMaximum(max_value)
