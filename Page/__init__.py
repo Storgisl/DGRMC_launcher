@@ -1,3 +1,4 @@
+from .Page import Page
 from .AccountPage import AccountPage
 from .HomePage import HomePage
 from .LoginPage import LoginPage
