@@ -1,14 +1,7 @@
 from PySide6.QtWidgets import (
-    QLabel,
-    QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QFrame,
-    QSpacerItem,
     QSizePolicy,
-    QSlider,
-    QLineEdit,
-    QCheckBox,
 )
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt

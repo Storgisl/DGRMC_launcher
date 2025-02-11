@@ -1,16 +1,8 @@
 from PySide6.QtWidgets import (
-    QMainWindow,
-    QApplication,
-    QStackedWidget,
-    QLabel,
     QVBoxLayout,
     QHBoxLayout,
-    QFrame,
-    QSpacerItem,
     QSizePolicy,
-    QPushButton,
 )
-from PySide6.QtGui import QMouseEvent, QFontDatabase, QFont
 from PySide6.QtCore import Qt
 
 from Factory import LoggerFactory

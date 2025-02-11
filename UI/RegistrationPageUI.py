@@ -1,15 +1,10 @@
 from PySide6.QtWidgets import (
     QLineEdit,
-    QLabel,
-    QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QFrame,
-    QSpacerItem,
     QSizePolicy,
 )
-from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt
 
 from Factory import LoggerFactory
 

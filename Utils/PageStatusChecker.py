@@ -12,10 +12,12 @@ class PageStatusChecker:
         self.data_manip = DataManip()
 
         if platform.system() == "Windows":
-            self.config_dir = os.path.join(os.getenv("LOCALAPPDATA"), "DGRMC_Launcher")
+            self.config_dir = Path(os.getenv("LOCALAPPDATA")) / "DGRMC_Launcher"
         else:
             self.config_dir = os.path.expanduser("~/.dgrmc_launcher")
 
+        os.makedirs(self.config_dir, exist_ok=True)
+        
         self.user_data_json = "user_data.json"
         self.user_options_json = "user_options.json"
         self.user_data = self.data_manip.load_user_data(

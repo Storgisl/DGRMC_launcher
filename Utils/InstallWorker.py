@@ -17,13 +17,13 @@ class InstallWorker(QObject):
 
     def __init__(self, mc_dir, base_url):
         super().__init__()
-        self.mc_dir = mc_dir
+        self.mc_dir = Path(mc_dir)  # Ensure mc_dir is a Path object
         self.base_url = base_url
 
     def install_forge(self):
         self.set_status_signal.emit("Installing Minecraft...")
         version = "1.20.1"
-        mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
+        mc_dir = self.mc_dir / "DGRMClauncher"
         forge_version = mc_lib.forge.find_forge_version(version)
         if mc_lib.forge.supports_automatic_install(forge_version):
             callback = {
@@ -31,7 +31,7 @@ class InstallWorker(QObject):
                 "setMax": lambda max_value: self.set_max_signal.emit(max_value),
             }
             mc_lib.forge.install_forge_version(
-                versionid=forge_version, path=mc_dir, callback=callback
+                versionid=forge_version, path=str(mc_dir), callback=callback
             )
         else:
             mc_lib.forge.run_forge_installer(version=forge_version)
@@ -48,19 +48,20 @@ class InstallWorker(QObject):
                         if extracted_path.is_dir():
                             temp_dir = target_dir / f"{zip_info.filename}_temp"
                             temp_dir.mkdir(parents=True, exist_ok=True)
-                            zip_ref.extract(zip_info, temp_dir)
+                            zip_ref.extract(zip_info, str(temp_dir))  # Convert to string for zip_ref.extract
                             for item in temp_dir.iterdir():
                                 dest = extracted_path / item.name
                                 if item.is_file() and not dest.exists():
-                                    shutil.move(item, dest)
+                                    shutil.move(str(item), str(dest))  # Convert to string for shutil.move
                                 elif item.is_dir():
-                                    shutil.copytree(item, dest, dirs_exist_ok=True)
-                            shutil.rmtree(temp_dir)
+                                    shutil.copytree(str(item), str(dest), dirs_exist_ok=True)  # Convert to string for shutil.copytree
+                            shutil.rmtree(str(temp_dir))  # Convert to string for shutil.rmtree
                         else:
                             print(f"File {extracted_path} already exists. Skipping...")
                     else:
-                        zip_ref.extract(zip_info, target_dir)
-                zip_path.unlink()
+                        zip_ref.extract(zip_info, str(target_dir))  # Convert to string for zip_ref.extract
+            # Ensure the file is closed before deleting it
+            zip_path.unlink()
             print(f"Extracted and merged contents of {zip_path.name} into {target_dir}")
         except Exception as e:
             print(f"Error during extraction and merge: {e}")
@@ -79,7 +80,6 @@ class InstallWorker(QObject):
                         downloaded_size += len(chunk)
                         progress = int((downloaded_size / total_size) * 100)
 
-                        # Throttle to 5% increments
                         if progress >= last_emit + 10 or progress == 100:
                             ic(progress)
                             ic(last_emit)
@@ -92,11 +92,11 @@ class InstallWorker(QObject):
     def install_mods(self) -> None:
         self.set_status_signal.emit("Installing Mods...")
         url = self.base_url + "mods.zip"
-        file_path = Path(self.mc_dir) / "DGRMClauncher" / "mods.zip"
+        file_path = self.mc_dir / "DGRMClauncher" / "mods.zip"
         self.download_file(url=url, file_path=file_path)
         ic("Mods downloaded")
         self.unzip_and_merge(
-            zip_path=file_path, target_dir=Path(self.mc_dir) / "DGRMClauncher" / "mods"
+            zip_path=file_path, target_dir=self.mc_dir / "DGRMClauncher" / "mods"
         )
         ic("Mods installed")
         self.set_status_signal.emit("Mods installation completed successfully!")
@@ -104,12 +104,12 @@ class InstallWorker(QObject):
     def install_rpacks(self) -> None:
         self.set_status_signal.emit("Installing Resource packs...")
         url = self.base_url + "resourcepacks.zip"
-        file_path = Path(self.mc_dir) / "DGRMClauncher" / "resourcepacks.zip"
+        file_path = self.mc_dir / "DGRMClauncher" / "resourcepacks.zip"
         self.download_file(url=url, file_path=file_path)
         ic("Rpacks downloaded")
         self.unzip_and_merge(
             zip_path=file_path,
-            target_dir=Path(self.mc_dir) / "DGRMClauncher" / "resourcepacks",
+            target_dir=self.mc_dir / "DGRMClauncher" / "resourcepacks"
         )
         ic("Rpacks installed")
         self.set_status_signal.emit(
@@ -119,18 +119,18 @@ class InstallWorker(QObject):
     def install_emotes(self) -> None:
         self.set_status_signal.emit("Installing Emotes...")
         url = self.base_url + "emotes.zip"
-        file_path = Path(self.mc_dir) / "DGRMClauncher" / "emotes.zip"
+        file_path = self.mc_dir / "DGRMClauncher" / "emotes.zip"
         self.download_file(url=url, file_path=file_path)
         ic("Emotes downloaded")
         self.unzip_and_merge(
             zip_path=file_path,
-            target_dir=Path(self.mc_dir) / "DGRMClauncher" / "emotes",
+            target_dir=self.mc_dir / "DGRMClauncher" / "emotes"
         )
         ic("Emotes installed")
         self.set_status_signal.emit("Emotes installation completed successfully!")
 
     def install_mc(self):
-        mc_dir = os.path.join(self.mc_dir, "DGRMClauncher")
+        mc_dir = self.mc_dir / "DGRMClauncher"
         os.makedirs(mc_dir, exist_ok=True)
 
         max_retries = 5

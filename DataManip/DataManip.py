@@ -1,10 +1,10 @@
 import os
 import json
-
+from pathlib import Path
 
 class DataManip:
     def save_user_data(self, new_data: dict, directory: str, json_file: str) -> None:
-        user_data_file = os.path.join(directory, json_file)
+        user_data_file = str(Path(directory) / json_file)
 
         os.makedirs(directory, exist_ok=True)
 

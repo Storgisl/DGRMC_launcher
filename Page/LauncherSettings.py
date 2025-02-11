@@ -1,7 +1,7 @@
 import sys
 import os
 from PySide6.QtCore import Signal
-
+from pathlib import Path
 from UI import LauncherSettingsUI
 
 from .Page import Page
@@ -23,10 +23,10 @@ class LauncherSettings(Page):
         pass
 
     def open_folder(self) -> None:
-        path = os.path.join(self.mc_dir, "DGRMClauncher")
-
+        path = str(Path(self.mc_dir) / "DGRMClauncher")
+        
         if sys.platform == "win32":
-            os.system(f'explorer /select,"{path}"')
+            os.system(f'explorer "{path}"')
         elif sys.platform == "darwin":
             os.system(f'open "{path}"')
         else:

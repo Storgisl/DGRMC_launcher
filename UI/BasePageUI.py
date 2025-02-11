@@ -1,14 +1,8 @@
 from logging import addLevelName
 from PySide6.QtWidgets import (
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QSpacerItem,
-    QSizePolicy,
-    QFrame,
     QHBoxLayout,
 )
-from PySide6.QtGui import QPixmap, QFont, QFontDatabase
+from PySide6.QtGui import  QFont, QFontDatabase
 from PySide6.QtCore import Qt
 
 from Factory import LoggerFactory, UIFactory

@@ -1,22 +1,4 @@
-import os
-import time
-import threading
-import zipfile
-import shutil
-import minecraft_launcher_lib as mc_lib
-import requests
-
-from PySide6.QtWidgets import (
-    QPushButton,
-    QFileDialog,
-    QLabel,
-    QProgressBar,
-)
-from PySide6.QtGui import QMovie
-from PySide6.QtCore import Signal, Qt, QTimer
-
-from icecream import ic
-from pathlib import Path
+from PySide6.QtCore import Signal
 
 from UI import DownloadPageUI
 from .Page import Page

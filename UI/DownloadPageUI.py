@@ -171,13 +171,16 @@ class DownloadPageUI(BasePageUI):
     def start_installation(self) -> None:
         from Utils import InstallWorker
 
+        # Remove the "Choose" and "Install" buttons
         self.frame_layout.removeWidget(self.choose_dir_button)
         self.frame_layout.removeWidget(self.install_mc_button)
         self.install_mc_button.deleteLater()
         self.choose_dir_button.deleteLater()
 
+        # Update the status label
         self.label.setText("Starting installation...")
 
+        # Add a progress bar
         self.progress_bar = self.ui_factory.create_progress_bar(
             range=(0, 100),
             fixed_size=(385, 5),
@@ -194,18 +197,22 @@ class DownloadPageUI(BasePageUI):
                 border: none;
                 border-radius: 5px;
             }
-        """,
+            """,
         )
 
+        # Add the loading GIF and progress bar to the layout
         self.frame_layout.addWidget(
             self.loading_gif_label, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
         self.frame_layout.addWidget(
             self.progress_bar, alignment=Qt.AlignTop | Qt.AlignHCenter
         )
+
+        # Start the loading GIF
         self._cancelled = False
         self.loading_gif.start()
 
+        # Create and configure the worker thread
         self.thread = QThread()
         self.worker = InstallWorker(
             mc_dir=self.parent.mc_dir, base_url=self.parent.base_url
@@ -218,28 +225,39 @@ class DownloadPageUI(BasePageUI):
         self.worker.set_progress_signal.connect(self.update_progress)
         self.worker.set_max_signal.connect(self.set_progress_max)
 
+
         # Handle worker and thread cleanup
         def cleanup():
             """Clean up resources after installation completes or is cancelled."""
             try:
+                # Disconnect all signals to avoid memory leaks
                 self.worker.set_status_signal.disconnect()
                 self.worker.set_progress_signal.disconnect()
                 self.worker.set_max_signal.disconnect()
+                self.worker.finished.disconnect()
             except RuntimeError:
                 pass  # Signals already disconnected
 
+            # Stop the thread
             self.thread.quit()
-            self.thread.wait()
+            #self.thread.wait()
+
+            # Clean up the thread and worker
             self.thread.deleteLater()
             self.worker.deleteLater()
 
             # Stop the loading GIF and clean up
             self.stop_gif()
+
             # Re-enable the UI
-            self.parent.setDisabled(False)
+            #self.parent.setDisabled(False)
             self.parent.download_complete.emit()
 
+    # Connect the cleanup function to the worker's finished signal
         self.worker.finished.connect(cleanup)
+
+        # Start the thread
+        self.thread.start()
 
         # Add a "Cancel" button
         # self.cancel_button = self.ui_factory.create_button(
@@ -268,7 +286,6 @@ class DownloadPageUI(BasePageUI):
         # )
 
         # Start the thread
-        self.thread.start()
 
     @Slot(str)
     def update_status(self, status: str) -> None:

@@ -1,5 +1,4 @@
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QHBoxLayout
+from PySide6.QtCore import Signal
 
 from UI import AccountPageUI
 from .Page import Page

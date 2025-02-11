@@ -1,13 +1,8 @@
 from PySide6.QtWidgets import (
-    QLabel,
-    QPushButton,
     QVBoxLayout,
     QHBoxLayout,
-    QFrame,
-    QSpacerItem,
     QSizePolicy,
 )
-from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
 from Factory import LoggerFactory
@@ -292,12 +287,3 @@ class LauncherSettingsUI(BasePageUI):
             elements=[{"widget": frame, "alignment": Qt.AlignCenter}],
         )
         return main_layout
-
-        layout = QVBoxLayout()
-        layout.addSpacing(20)
-        layout.addWidget(navbar_settings_frame)
-        layout.addSpacing(40)
-        layout.addLayout(main_layout)
-        layout.addStretch()
-        layout.addLayout(self.footer_layout())
-        self.logger.info("Initializing LauncherSettigs UI...")
